@@ -1,0 +1,24 @@
+plugins {
+    id 'java'
+}
+
+project.sourceCompatibility = '11'
+project.targetCompatibility = '11'
+
+group 'de.skuld'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src']
+        }
+    }
+}
+dependencies {
+    compile 'junit:junit:4.12'
+    compile 'org.jetbrains:annotations:16.0.2'
+}
