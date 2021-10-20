@@ -34,7 +34,7 @@ public class JavaRandom implements SeedablePRNG {
   }
 
   @Override
-  public void seed(Long seed) {
+  public void seed(long seed) {
     r.setSeed(seed);
   }
 }

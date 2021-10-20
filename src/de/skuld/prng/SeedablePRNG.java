@@ -9,5 +9,5 @@ public interface SeedablePRNG extends PRNG {
    *
    * @param seed The seed
    */
-  void seed(@Nullable Long seed);
+  void seed(long seed);
 }
