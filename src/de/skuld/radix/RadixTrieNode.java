@@ -1,0 +1,29 @@
+package de.skuld.radix;
+
+import java.util.Collection;
+import java.util.Optional;
+
+public interface RadixTrieNode<D extends AbstractRadixTrieData, E extends RadixTrieEdge<D, ? extends RadixTrieNode<D, E>>> {
+
+  boolean mergeNodes(RadixTrieNode<D, E> other);
+
+  boolean mergeNodes(D otherData);
+
+  String[] getPathFromRoot();
+
+  D getData();
+
+  boolean isLeafNode();
+
+  String serialize();
+
+  String[] toEdgeDescriptors();
+
+  Collection<E> getOutgoingEdges();
+
+  Optional<E> getOutgoingEdge(String label);
+
+  boolean addOutgoingEdge(E edge);
+
+  E getParentEdge();
+}
