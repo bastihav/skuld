@@ -23,6 +23,7 @@ public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, 
 
   @Override
   public boolean contains(RandomnessRadixTrieData data) {
+    System.out.println("looking for data " + data);
     String[] edgeLabels = data.toLabels();
 
     MemoryRadixTrieNode currentNode = getRoot();
@@ -33,10 +34,8 @@ public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, 
     while(!currentNode.isLeafNode() && advanced) {
       advanced = false;
 
-      System.out.println("in loop");
-
       // match
-      if (currentNode.getData().equals(data))
+      if (currentNode.getData() != null && currentNode.getData().equals(data))
         return true;
 
       // single edge
@@ -49,20 +48,22 @@ public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, 
       }
 
       // sumary edge
-      String partial = Arrays.stream(Arrays.copyOfRange(edgeLabels, i, edgeLabels.length)).reduce(String::concat).get();
+      String[] partial = Arrays.copyOfRange(edgeLabels, i, edgeLabels.length);
 
       for (StringRadixTrieEdge edge : currentNode.getOutgoingEdges()) {
         if (edge.queryIncludesEdge(partial)) {
           currentNode = edge.getChild();
           i += edge.amountOfSummarizedElements();
           advanced = true;
-          System.out.println("found summary");
+          System.out.println("found summary -> " + edge.getLabel());
           break;
         }
       }
     }
 
-    if (currentNode.getData().equals(data)) {
+    System.out.println(currentNode);
+
+    if (currentNode.getData() != null && currentNode.getData().equals(data)) {
       System.out.println("data -> " + currentNode.getData());
       return true;
     }
@@ -83,7 +84,7 @@ public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, 
       advanced = false;
 
       // match
-      if (currentNode.getData().equals(data))
+      if (currentNode.getData() != null && currentNode.getData().equals(data))
         return Optional.of(currentNode);
 
       // single edge
@@ -96,7 +97,7 @@ public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, 
       }
 
       // sumary edge
-      String partial = Arrays.stream(Arrays.copyOfRange(edgeLabels, i, edgeLabels.length)).reduce(String::concat).get();
+      String[] partial = Arrays.copyOfRange(edgeLabels, i, edgeLabels.length);
       for (StringRadixTrieEdge edge : currentNode.getOutgoingEdges()) {
         if (edge.queryIncludesEdge(partial)) {
           currentNode = edge.getChild();
@@ -107,7 +108,7 @@ public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, 
       }
     }
 
-    if (currentNode.getData().equals(data)) {
+    if (currentNode.getData() != null && currentNode.getData().equals(data)) {
       return Optional.of(currentNode);
     }
 
@@ -120,7 +121,7 @@ public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, 
   }
 
   @Override
-  public StringRadixTrieEdge createEdge(String label) {
+  public StringRadixTrieEdge createEdge(String[] label) {
     return new StringRadixTrieEdge(label);
   }
 

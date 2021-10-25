@@ -36,12 +36,15 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData, N exten
 
     String[] edges = data.toLabels();
     String[] coveredEdges = parent.getPathFromRoot();
+    System.out.println("coveredEdges " + Arrays.toString(coveredEdges));
 
     if (parent.isLeafNode() && parent != root) {
       return parent.mergeNodes(data);
     }
 
     String[] remainingEdges = Arrays.copyOfRange(edges, coveredEdges.length, edges.length);
+    System.out.println("remainingEdges " + Arrays.toString(remainingEdges));
+
     Optional<E> edge = parent.getOutgoingEdge(remainingEdges[0]);
 
     if (edge.isPresent()) {
@@ -53,29 +56,53 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData, N exten
       if (e.isSummary()) {
         System.out.println("walking summary");
         // walk this edge
-        if (e.queryIncludesEdge(Arrays.stream(remainingEdges).reduce(String::concat).get())) {
+        if (e.queryIncludesEdge(remainingEdges)) {
           return add(e.getChild(), data);
         }
 
-        String longestPrefix = "";
         int size = 0;
         for (int i = 1; i <= remainingEdges.length; i++) {
-          String pref = Arrays.stream(remainingEdges).limit(i).reduce(String::concat).get();
-          if (e.edgeIncludesQuery(pref)) {
-            longestPrefix = pref;
+          if (e.edgeIncludesQuery(Arrays.copyOfRange(remainingEdges, 0, i))) {
             size = i;
           } else {
             break;
           }
         }
 
-        if (!longestPrefix.isBlank()) {
+        if (size > 0) {
           // merge nodes
           if (size == remainingEdges.length) {
-            return add((N) e.getChild(), data);
+            return add(e.getChild(), data);
           } else {
             // split edge
-            throw new NotImplementedException();
+            System.out.println("---");
+            System.out.println("edge label: " + e.label);
+            System.out.println(Arrays.toString(remainingEdges));
+            System.out.println("-> split after " +  size);
+
+            System.out.println("---");
+            E firstEdge = this.createEdge(Arrays.copyOfRange(remainingEdges, 0, size));
+            firstEdge.setSummary(size > 1);
+            firstEdge.setAmountOfSummarizedElements(size);
+
+            E secondEdge = this.createEdge(Arrays.copyOfRange(e.getLabel(), size, e.getLabel().length));
+            secondEdge.setSummary(e.amountOfSummarizedElements() - size > 1);
+            secondEdge.setAmountOfSummarizedElements(e.amountOfSummarizedElements() - size);
+
+            N middleNode = createNode(null, firstEdge);
+            middleNode.addOutgoingEdge(secondEdge);
+            firstEdge.setChild(middleNode);
+
+            N oldSubtree = e.getChild();
+            oldSubtree.setParentEdge(secondEdge);
+            secondEdge.setChild(oldSubtree);
+
+            parent.removeEdge(e);
+            parent.addOutgoingEdge(firstEdge);
+            firstEdge.setParent(parent);
+
+            System.out.println("calling recursively");
+            return add(middleNode, data);
           }
         }
 
@@ -85,7 +112,7 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData, N exten
     System.out.println("-->");
 
     // last case: we branch off of here
-    E newEdge = this.createEdge(Arrays.stream(remainingEdges).reduce(String::concat).get());
+    E newEdge = this.createEdge(remainingEdges);
     newEdge.setSummary(remainingEdges.length > 1);
     newEdge.setAmountOfSummarizedElements(remainingEdges.length);
 

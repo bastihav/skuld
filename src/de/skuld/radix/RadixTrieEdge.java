@@ -7,24 +7,30 @@ public interface RadixTrieEdge<D extends AbstractRadixTrieData, N extends RadixT
    *
    * @return isSummary
    */
-  boolean isSummary();
+  default boolean isSummary() {
+    return getLabel().length > 1;
+  }
 
   void setSummary(boolean isSummary);
 
-  int amountOfSummarizedElements();
+  default int amountOfSummarizedElements() {
+    return getLabel().length;
+  }
 
   void setAmountOfSummarizedElements(int amountOfSummarizedElements);
 
-  boolean edgeIncludesQuery(String query);
+  boolean edgeIncludesQuery(String[] query);
 
-  String getLabel();
+  String[] getLabel();
 
-  boolean queryIncludesEdge(String query);
+  boolean queryIncludesEdge(String[] query);
 
   N getChild();
 
   N getParent();
 
   void setChild(N child);
+
+  void setParent(N parent);
 
 }

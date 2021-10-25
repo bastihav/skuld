@@ -67,6 +67,11 @@ public class DiskBasedRadixTrieNode extends AbstractRadixTrieNode<RandomnessRadi
   }
 
   @Override
+  public boolean removeEdge(PathRadixTrieEdge edge) {
+    return false;
+  }
+
+  @Override
   public boolean addOutgoingEdge(PathRadixTrieEdge edge) {
     return false;
   }
@@ -74,6 +79,11 @@ public class DiskBasedRadixTrieNode extends AbstractRadixTrieNode<RandomnessRadi
   @Override
   public PathRadixTrieEdge getParentEdge() {
     return null;
+  }
+
+  @Override
+  public void setParentEdge(PathRadixTrieEdge parentEdge) {
+
   }
 
 }

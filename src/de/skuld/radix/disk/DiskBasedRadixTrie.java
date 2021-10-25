@@ -37,7 +37,7 @@ public class DiskBasedRadixTrie extends
   }
 
   @Override
-  public PathRadixTrieEdge createEdge(String label) {
+  public PathRadixTrieEdge createEdge(String[] label) {
     return null;
   }
 

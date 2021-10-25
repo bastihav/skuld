@@ -46,7 +46,12 @@ public class MemoryRadixTrieNode extends AbstractRadixTrieNode<RandomnessRadixTr
     if (this.getParentEdge() == null) {
       return new String[0];
     } else {
-      return Stream.concat(Arrays.stream(this.getParentEdge().getParent().getPathFromRoot()), Stream.of(this.getParentEdge().getLabel())).toArray(String[]::new);
+
+      System.out.println(this + " - " + this.getParentEdge().getParent());
+      Stream<String> parent = Arrays.stream(this.getParentEdge().getParent().getPathFromRoot());
+      Stream<String> last = Stream.of(this.getParentEdge().getLabel());
+
+      return Stream.concat(parent, last).toArray(String[]::new);
     }
   }
 
@@ -76,10 +81,20 @@ public class MemoryRadixTrieNode extends AbstractRadixTrieNode<RandomnessRadixTr
   }
 
   @Override
+  public boolean removeEdge(StringRadixTrieEdge edge) {
+    return this.outgoingEdges.remove(edge);
+  }
+
+  @Override
   public boolean addOutgoingEdge(StringRadixTrieEdge edge) {
     if (this.outgoingEdges == null) {
       this.outgoingEdges = new ArrayList<>();
     }
     return this.outgoingEdges.add(edge);
+  }
+
+  @Override
+  public void setParentEdge(StringRadixTrieEdge parentEdge) {
+    this.parentEdge = parentEdge;
   }
 }

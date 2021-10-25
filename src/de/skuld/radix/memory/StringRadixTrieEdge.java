@@ -10,7 +10,7 @@ public class StringRadixTrieEdge extends AbstractRadixTrieEdge<RandomnessRadixTr
   boolean isSummary = false;
   int amountOfSummarizedElements = 0;
 
-  StringRadixTrieEdge(String label) {
+  StringRadixTrieEdge(String[] label) {
     this.label = label;
   }
 
@@ -33,4 +33,5 @@ public class StringRadixTrieEdge extends AbstractRadixTrieEdge<RandomnessRadixTr
   public void setAmountOfSummarizedElements(int amountOfSummarizedElements) {
     this.amountOfSummarizedElements = amountOfSummarizedElements;
   }
+
 }

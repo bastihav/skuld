@@ -26,7 +26,7 @@ public interface RadixTrie<D extends AbstractRadixTrieData, N extends RadixTrieN
 
   boolean containsAll(Collection<N> nodes);
 
-  E createEdge(String label);
+  E createEdge(String[] label);
 
   N createNode(D data, E parentEdge);
 }

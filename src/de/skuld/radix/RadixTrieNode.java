@@ -23,7 +23,11 @@ public interface RadixTrieNode<D extends AbstractRadixTrieData, E extends RadixT
 
   Optional<E> getOutgoingEdge(String label);
 
+  boolean removeEdge(E edge);
+
   boolean addOutgoingEdge(E edge);
 
   E getParentEdge();
+
+  void setParentEdge(E parentEdge);
 }

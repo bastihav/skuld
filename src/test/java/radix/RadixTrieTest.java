@@ -1,5 +1,6 @@
 package radix;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import de.skuld.prng.ImplementedPRNGs;
@@ -41,11 +42,15 @@ public class RadixTrieTest {
 
     trie.add(data2);
 
+    System.out.println("outgoing edges " + trie.getRoot().getOutgoingEdges());
+
     assertTrue(trie.contains(data2));
+
+    assertEquals(1, trie.getRoot().getOutgoingEdges().size());
+    assertEquals(2, trie.getRoot().getOutgoingEdges().stream().findFirst().get().getChild().getOutgoingEdges().size());
 
     System.out.println(trie.getNode(data2).get().getParentEdge().getLabel());
 
-    System.out.println(trie.getRoot().getOutgoingEdges());
   }
 
 }
