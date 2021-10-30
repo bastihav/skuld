@@ -1,4 +1,4 @@
-package radix;
+package de.skuld.radix;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -38,11 +38,9 @@ public class RadixTrieTest {
 
     assertTrue(trie.contains(randomness));
 
-    System.out.println(Arrays.toString(trie.getNode(randomness).get().getParentEdge().getLabel()));
 
     trie.add(data2, randomness2);
 
-    System.out.println("outgoing edges " + trie.getRoot().getOutgoingEdges());
 
     assertTrue(trie.contains(randomness));
     assertTrue(trie.contains(randomness2));
@@ -50,7 +48,6 @@ public class RadixTrieTest {
     assertEquals(1, trie.getRoot().getOutgoingEdges().size());
     assertEquals(2, trie.getRoot().getOutgoingEdges().stream().findFirst().get().getChild().getOutgoingEdges().size());
 
-    System.out.println(Arrays.toString(trie.getNode(randomness2).get().getParentEdge().getLabel()));
   }
 
 }

@@ -1,6 +1,4 @@
-package prng;
-
-import de.skuld.prng.Xorshift128Plus;
+package de.skuld.prng;
 
 public class Xorshift128PlusTest extends AbstractPrngImplTest {
 

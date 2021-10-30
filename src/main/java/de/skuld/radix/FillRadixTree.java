@@ -19,7 +19,7 @@ public class FillRadixTree {
   }
 
   /**
-   * Method that returns all seeds that should be used per prng to fill the radix tree
+   * Method that returns all seeds that should be used per de.skuld.prng to fill the de.skuld.radix tree
    *
    * @return seed array
    */

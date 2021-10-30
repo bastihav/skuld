@@ -6,6 +6,28 @@ public abstract class AbstractRadixTrieEdge<D extends AbstractRadixTrieData, N e
   protected N child;
   protected N parent;
   protected String[] label;
+  boolean isSummary = false;
+  int amountOfSummarizedElements = 0;
+
+  @Override
+  public boolean isSummary() {
+    return isSummary;
+  }
+
+  @Override
+  public void setSummary(boolean isSummary) {
+    this.isSummary = isSummary;
+  }
+
+  @Override
+  public int amountOfSummarizedElements() {
+    return amountOfSummarizedElements;
+  }
+
+  @Override
+  public void setAmountOfSummarizedElements(int amountOfSummarizedElements) {
+    this.amountOfSummarizedElements = amountOfSummarizedElements;
+  }
 
   @Override
   public boolean edgeIncludesQuery(String[] query) {

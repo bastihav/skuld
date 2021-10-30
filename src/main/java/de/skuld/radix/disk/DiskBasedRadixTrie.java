@@ -29,7 +29,7 @@ public class DiskBasedRadixTrie extends
   }
 
   @Override
-  public @NotNull PathRadixTrieEdge createEdge(String[] label) {
+  public @NotNull PathRadixTrieEdge createEdge(String[] label, DiskBasedRadixTrieNode parentNode) {
     return null;
   }
 

@@ -1,25 +1,23 @@
 package de.skuld.radix;
 
-import de.skuld.radix.data.RandomnessRadixTrieData;
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.Optional;
-import org.apache.commons.lang3.NotImplementedException;
+import java.util.Stack;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I>, I, N extends RadixTrieNode<D, E>, E extends AbstractRadixTrieEdge<D, N>> implements RadixTrie<D, I, N, E> {
   protected N root = getDummyNode();
 
+  private static final Logger LOGGER = LogManager.getLogger();
+
   @Override
   public @NotNull N getRoot() {
     return root;
-  }
-
-  protected boolean hasOutgoingEdge(N node, E edge) {
-    return node.getOutgoingEdges().contains(edge);
-  }
-
-  protected boolean hasOutgoingEdge(N node, String label) {
-    return node.getOutgoingEdge(label).isPresent();
   }
 
   @Override
@@ -29,22 +27,14 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I>, I, N
 
   @Override
   public boolean add(@NotNull N parent, @NotNull D data, @NotNull I indexingData) {
-    if (parent == null) {
-      N newNode = this.createNode(data, null);
-      this.root = newNode;
-      return true;
-    }
-
     String[] edges = data.toLabels(indexingData);
     String[] coveredEdges = parent.getPathFromRoot();
-    System.out.println("coveredEdges " + Arrays.toString(coveredEdges));
 
     if (parent.isLeafNode() && parent != root) {
       return parent.mergeNodes(data);
     }
 
     String[] remainingEdges = Arrays.copyOfRange(edges, coveredEdges.length, edges.length);
-    System.out.println("remainingEdges " + Arrays.toString(remainingEdges));
 
     Optional<E> edge = parent.getOutgoingEdge(remainingEdges[0]);
 
@@ -53,9 +43,7 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I>, I, N
     }
 
     for (E e : parent.getOutgoingEdges()) {
-      System.out.println(e.isSummary());
       if (e.isSummary()) {
-        System.out.println("walking summary");
         // walk this edge
         if (e.queryIncludesEdge(remainingEdges)) {
           return add(e.getChild(), data, indexingData);
@@ -76,34 +64,22 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I>, I, N
             return add(e.getChild(), data, indexingData);
           } else {
             // split edge
-            System.out.println("---");
-            System.out.println("edge label: " + e.label);
-            System.out.println(Arrays.toString(remainingEdges));
-            System.out.println("-> split after " +  size);
-
-            System.out.println("---");
-            E firstEdge = this.createEdge(Arrays.copyOfRange(remainingEdges, 0, size));
+            E firstEdge = this.createEdge(Arrays.copyOfRange(remainingEdges, 0, size), parent);
             firstEdge.setSummary(size > 1);
             firstEdge.setAmountOfSummarizedElements(size);
 
-            E secondEdge = this.createEdge(Arrays.copyOfRange(e.getLabel(), size, e.getLabel().length));
+            N middleNode = createNode(null, firstEdge);
+
+            E secondEdge = this.createEdge(Arrays.copyOfRange(e.getLabel(), size, e.getLabel().length), middleNode);
             secondEdge.setSummary(e.amountOfSummarizedElements() - size > 1);
             secondEdge.setAmountOfSummarizedElements(e.amountOfSummarizedElements() - size);
-
-            N middleNode = createNode(null, firstEdge);
-            middleNode.addOutgoingEdge(secondEdge);
-            secondEdge.setParent(middleNode);
-            firstEdge.setChild(middleNode);
 
             N oldSubtree = e.getChild();
             oldSubtree.setParentEdge(secondEdge);
             secondEdge.setChild(oldSubtree);
 
             parent.removeEdge(e);
-            parent.addOutgoingEdge(firstEdge);
-            firstEdge.setParent(parent);
 
-            System.out.println("calling recursively");
             return add(middleNode, data, indexingData);
           }
         }
@@ -111,22 +87,27 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I>, I, N
       }
     }
 
-    System.out.println("-->");
-
     // last case: we branch off of here
-    E newEdge = this.createEdge(remainingEdges);
+    E newEdge = this.createEdge(remainingEdges, parent);
     newEdge.setSummary(remainingEdges.length > 1);
     newEdge.setAmountOfSummarizedElements(remainingEdges.length);
 
     N newNode = this.createNode(data, newEdge);
-    newEdge.setChild(newNode);
-    newEdge.setParent(parent);
-    parent.addOutgoingEdge(newEdge);
 
-    System.out.println(parent.getOutgoingEdges());
-    System.out.println(
-        Arrays.toString(parent.getOutgoingEdges().stream().findFirst().get().getLabel()));
-    return false;
+    if (LOGGER.getLevel() == Level.DEBUG) {
+      StringBuilder sb = new StringBuilder();
+      sb.append("Created new node for data: {").append(Arrays.toString(edges)).append("} with path (from root): ");
+      N currentNode = newNode;
+      Deque<E> path = new ArrayDeque<>();
+      while (currentNode != null && currentNode.getParentEdge() != null) {
+        path.push(currentNode.getParentEdge());
+        currentNode = currentNode.getParentEdge().getParent();
+      }
+      path.forEach(e -> sb.append(Arrays.toString(e.getLabel())).append(", "));
+      LOGGER.debug(sb.toString());
+    }
+
+    return true;
   }
 
 }

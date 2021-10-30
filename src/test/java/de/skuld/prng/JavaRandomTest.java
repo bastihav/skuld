@@ -1,6 +1,5 @@
-package prng;
+package de.skuld.prng;
 
-import de.skuld.prng.JavaRandom;
 import java.util.Random;
 
 public class JavaRandomTest extends AbstractPrngImplTest {

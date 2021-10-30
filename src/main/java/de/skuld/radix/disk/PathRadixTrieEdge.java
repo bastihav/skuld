@@ -31,5 +31,4 @@ public class PathRadixTrieEdge extends AbstractRadixTrieEdge<RandomnessRadixTrie
   public void setAmountOfSummarizedElements(int amountOfSummarizedElements) {
 
   }
-
 }

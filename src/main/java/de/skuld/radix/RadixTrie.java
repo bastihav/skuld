@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Generic radix trie interface
+ * Generic de.skuld.radix trie interface
  *
  * Example:
  *  Leaves store meta-information on randomness, i.e. seed and algorithm
@@ -72,16 +72,17 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I>, I, N extends Radi
   Optional<N> getNode(@NotNull I indexingData);
 
   /**
-   * Method that creates a new edge for the radix trie. The edge should not yet be connected or inserted in the trie.
+   * Method that creates a new edge for the de.skuld.radix trie. The edge should not yet be connected or inserted in the trie.
    *
    * @param label edge label
+   * @param parentNode parent node
    * @return new edge instance
    */
   @NotNull
-  E createEdge(@NotNull String[] label);
+  E createEdge(@NotNull String[] label, @NotNull N parentNode);
 
   /**
-   * Method that creates a new node for the radix trie. The edge should not yet be inserted in the trie.
+   * Method that creates a new node for the de.skuld.radix trie. The edge should not yet be inserted in the trie.
    *
    * @param data node data. May be null if this is not a leaf
    * @param parentEdge parent edge. May be null if this is the root element

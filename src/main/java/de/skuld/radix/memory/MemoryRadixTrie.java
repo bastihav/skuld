@@ -19,7 +19,6 @@ public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, 
 
   @Override
   public boolean contains(byte @NotNull [] indexingData) {
-    System.out.println("looking for data " + indexingData);
     String[] edgeLabels = RandomnessRadixTrieData.staticToLabels(indexingData);
 
     MemoryRadixTrieNode currentNode = getRoot();
@@ -51,7 +50,6 @@ public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, 
           currentNode = edge.getChild();
           i += edge.amountOfSummarizedElements();
           advanced = true;
-          System.out.println("found summary -> " + Arrays.toString(edge.getLabel()));
           break;
         }
       }
@@ -104,13 +102,19 @@ public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, 
   }
 
   @Override
-  public @NotNull StringRadixTrieEdge createEdge(String[] label) {
-    return new StringRadixTrieEdge(label);
+  public @NotNull StringRadixTrieEdge createEdge(String[] label, @NotNull MemoryRadixTrieNode parentNode) {
+    StringRadixTrieEdge edge = new StringRadixTrieEdge(label);
+    edge.setParent(parentNode);
+    parentNode.addOutgoingEdge(edge);
+    return edge;
   }
 
   @Override
   public @NotNull MemoryRadixTrieNode createNode(RandomnessRadixTrieData data,
       StringRadixTrieEdge parentEdge) {
-    return new MemoryRadixTrieNode(data, parentEdge);
+    MemoryRadixTrieNode node = new MemoryRadixTrieNode(data, parentEdge);
+    node.setParentEdge(parentEdge);
+    parentEdge.setChild(node);
+    return node;
   }
 }
