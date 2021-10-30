@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 public class MemoryRadixTrieNode extends AbstractRadixTrieNode<RandomnessRadixTrieData, StringRadixTrieEdge> implements RadixTrieNode<RandomnessRadixTrieData, StringRadixTrieEdge> {
 
   Collection<StringRadixTrieEdge> outgoingEdges;
-  public static final MemoryRadixTrieNode DUMMY_NODE = new MemoryRadixTrieNode(new RandomnessRadixTrieData(null, null, 0, 0));
+  public static final MemoryRadixTrieNode DUMMY_NODE = new MemoryRadixTrieNode(new RandomnessRadixTrieData(null, 0, 0));
 
   public MemoryRadixTrieNode(RandomnessRadixTrieData data) {
     this.data = data;
@@ -29,6 +29,10 @@ public class MemoryRadixTrieNode extends AbstractRadixTrieNode<RandomnessRadixTr
   public MemoryRadixTrieNode(RandomnessRadixTrieData data, StringRadixTrieEdge parentEdge, StringRadixTrieEdge childEdge) {
     this(data, parentEdge);
     this.addOutgoingEdge(parentEdge);
+  }
+
+  public MemoryRadixTrieNode() {
+
   }
 
   @Override

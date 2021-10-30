@@ -6,27 +6,29 @@ import de.skuld.util.BytePrinter;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class RandomnessRadixTrieData extends AbstractRadixTrieData {
-  private final byte[] data;
+public class RandomnessRadixTrieData extends AbstractRadixTrieData<byte[]> {
   private final ImplementedPRNGs rng;
   private final int seedIndex;
   private final int byteIndexInRandomness;
 
-  public RandomnessRadixTrieData(byte[] data, ImplementedPRNGs rng, int seedIndex,
+  public RandomnessRadixTrieData(ImplementedPRNGs rng, int seedIndex,
       int byteIndexInRandomness) {
-    this.data = data;
     this.rng = rng;
     this.seedIndex = seedIndex;
     this.byteIndexInRandomness = byteIndexInRandomness;
   }
 
   @Override
-  public AbstractRadixTrieData mergeData(AbstractRadixTrieData other) {
+  public AbstractRadixTrieData<byte[]> mergeData(AbstractRadixTrieData<byte[]> other) {
     return null;
   }
 
   @Override
-  public String[] toLabels() {
+  public String[] toLabels(byte[] data) {
+    return RandomnessRadixTrieData.staticToLabels(data);
+  }
+
+  public static String[] staticToLabels(byte[] data) {
     String[] result = new String[data.length];
 
     for (int i = 0; i < data.length; i++) {
@@ -38,7 +40,8 @@ public class RandomnessRadixTrieData extends AbstractRadixTrieData {
 
   @Override
   public String concatenateLabels() {
-    return concatenateLabels(this.toLabels());
+    // TODO
+    return concatenateLabels(this.toLabels(null));
   }
 
   @Override
@@ -52,30 +55,9 @@ public class RandomnessRadixTrieData extends AbstractRadixTrieData {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    RandomnessRadixTrieData that = (RandomnessRadixTrieData) o;
-    return seedIndex == that.seedIndex && byteIndexInRandomness == that.byteIndexInRandomness
-        && Arrays.equals(data, that.data) && rng == that.rng;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = Objects.hash(rng, seedIndex, byteIndexInRandomness);
-    result = 31 * result + Arrays.hashCode(data);
-    return result;
-  }
-
-  @Override
   public String toString() {
     return "RandomnessRadixTrieData{" +
-        "data=" + Arrays.toString(data) +
-        ", rng=" + rng +
+        "rng=" + rng +
         ", seedIndex=" + seedIndex +
         ", byteIndexInRandomness=" + byteIndexInRandomness +
         '}';

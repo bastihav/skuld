@@ -8,23 +8,19 @@ import de.skuld.radix.disk.DiskBasedRadixTrieNode;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
+import org.jetbrains.annotations.NotNull;
 
-public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, MemoryRadixTrieNode, StringRadixTrieEdge> {
+public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, byte[], MemoryRadixTrieNode, StringRadixTrieEdge> {
 
   @Override
-  public MemoryRadixTrieNode getDummyNode() {
-    return MemoryRadixTrieNode.DUMMY_NODE;
+  public @NotNull MemoryRadixTrieNode getDummyNode() {
+    return new MemoryRadixTrieNode();
   }
 
   @Override
-  public boolean addAll(Collection<MemoryRadixTrieNode> nodes) {
-    return false;
-  }
-
-  @Override
-  public boolean contains(RandomnessRadixTrieData data) {
-    System.out.println("looking for data " + data);
-    String[] edgeLabels = data.toLabels();
+  public boolean contains(byte @NotNull [] indexingData) {
+    System.out.println("looking for data " + indexingData);
+    String[] edgeLabels = RandomnessRadixTrieData.staticToLabels(indexingData);
 
     MemoryRadixTrieNode currentNode = getRoot();
 
@@ -35,7 +31,7 @@ public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, 
       advanced = false;
 
       // match
-      if (currentNode.getData() != null && currentNode.getData().equals(data))
+      if (Arrays.equals(currentNode.getPathFromRoot(), edgeLabels))
         return true;
 
       // single edge
@@ -55,25 +51,18 @@ public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, 
           currentNode = edge.getChild();
           i += edge.amountOfSummarizedElements();
           advanced = true;
-          System.out.println("found summary -> " + edge.getLabel());
+          System.out.println("found summary -> " + Arrays.toString(edge.getLabel()));
           break;
         }
       }
     }
 
-    System.out.println(currentNode);
-
-    if (currentNode.getData() != null && currentNode.getData().equals(data)) {
-      System.out.println("data -> " + currentNode.getData());
-      return true;
-    }
-
-    return false;
+    return Arrays.equals(currentNode.getPathFromRoot(), edgeLabels);
   }
 
   @Override
-  public Optional<MemoryRadixTrieNode> getNode(RandomnessRadixTrieData data) {
-    String[] edgeLabels = data.toLabels();
+  public Optional<MemoryRadixTrieNode> getNode(byte @NotNull [] indexingData) {
+    String[] edgeLabels = RandomnessRadixTrieData.staticToLabels(indexingData);
 
     MemoryRadixTrieNode currentNode = getRoot();
 
@@ -84,7 +73,7 @@ public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, 
       advanced = false;
 
       // match
-      if (currentNode.getData() != null && currentNode.getData().equals(data))
+      if (Arrays.equals(currentNode.getPathFromRoot(), edgeLabels))
         return Optional.of(currentNode);
 
       // single edge
@@ -96,7 +85,7 @@ public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, 
         continue;
       }
 
-      // sumary edge
+      // summary edge
       String[] partial = Arrays.copyOfRange(edgeLabels, i, edgeLabels.length);
       for (StringRadixTrieEdge edge : currentNode.getOutgoingEdges()) {
         if (edge.queryIncludesEdge(partial)) {
@@ -108,25 +97,19 @@ public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, 
       }
     }
 
-    if (currentNode.getData() != null && currentNode.getData().equals(data)) {
+    if (Arrays.equals(currentNode.getPathFromRoot(), edgeLabels))
       return Optional.of(currentNode);
-    }
 
     return Optional.empty();
   }
 
   @Override
-  public boolean containsAll(Collection<MemoryRadixTrieNode> nodes) {
-    return false;
-  }
-
-  @Override
-  public StringRadixTrieEdge createEdge(String[] label) {
+  public @NotNull StringRadixTrieEdge createEdge(String[] label) {
     return new StringRadixTrieEdge(label);
   }
 
   @Override
-  public MemoryRadixTrieNode createNode(RandomnessRadixTrieData data,
+  public @NotNull MemoryRadixTrieNode createNode(RandomnessRadixTrieData data,
       StringRadixTrieEdge parentEdge) {
     return new MemoryRadixTrieNode(data, parentEdge);
   }

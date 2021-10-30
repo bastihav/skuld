@@ -1,9 +1,10 @@
 package prng;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+
 import de.skuld.util.BytePrinter;
 import java.util.Arrays;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Interface to validate the java implementation of the prng
@@ -81,6 +82,6 @@ public abstract class AbstractPrngImplTest {
     System.out.println(Arrays.toString(seeds));
 
     Arrays.stream(getTargetBytes(seeds)).forEach(BytePrinter::printBytesAsHex);
-    Assert.assertArrayEquals(getTargetBytes(seeds), getActualBytes(seeds));
+    assertArrayEquals(getTargetBytes(seeds), getActualBytes(seeds));
   }
 }
