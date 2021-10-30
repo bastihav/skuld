@@ -97,13 +97,7 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I>, I, N
     if (LOGGER.getLevel() == Level.DEBUG) {
       StringBuilder sb = new StringBuilder();
       sb.append("Created new node for data: {").append(Arrays.toString(edges)).append("} with path (from root): ");
-      N currentNode = newNode;
-      Deque<E> path = new ArrayDeque<>();
-      while (currentNode != null && currentNode.getParentEdge() != null) {
-        path.push(currentNode.getParentEdge());
-        currentNode = currentNode.getParentEdge().getParent();
-      }
-      path.forEach(e -> sb.append(Arrays.toString(e.getLabel())).append(", "));
+      newNode.getEdgesFromRoot().forEach(e -> sb.append(Arrays.toString(e.getLabel())).append(", "));
       LOGGER.debug(sb.toString());
     }
 

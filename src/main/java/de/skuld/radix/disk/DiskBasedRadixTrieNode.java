@@ -13,6 +13,13 @@ public class DiskBasedRadixTrieNode extends AbstractRadixTrieNode<RandomnessRadi
   private final short PARTITION_SIZE = 32;
   private final byte[] data;
 
+  /**
+   * unsafe constructor
+   */
+  public DiskBasedRadixTrieNode() {
+    this.data = null;
+  }
+
   public DiskBasedRadixTrieNode(byte[] data) {
     if (data.length != PARTITION_SIZE) {
       throw new AssertionError("Node data size must equal partition size!");

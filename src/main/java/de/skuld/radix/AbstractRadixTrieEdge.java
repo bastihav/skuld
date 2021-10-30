@@ -1,6 +1,8 @@
 package de.skuld.radix;
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Deque;
 
 public abstract class AbstractRadixTrieEdge<D extends AbstractRadixTrieData, N extends RadixTrieNode<D, ? extends RadixTrieEdge<D, N>>> implements RadixTrieEdge<D, N> {
   protected N child;
