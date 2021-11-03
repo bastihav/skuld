@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Generic de.skuld.radix trie interface
+ * Generic radix trie interface
  *
  * Example:
  *  Leaves store meta-information on randomness, i.e. seed and algorithm
@@ -72,7 +72,7 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I>, I, N extends Radi
   Optional<N> getNode(@NotNull I indexingData);
 
   /**
-   * Method that creates a new edge for the de.skuld.radix trie. The edge should not yet be connected or inserted in the trie.
+   * Method that creates a new edge for the radix trie. The edge should not yet be connected or inserted in the trie.
    *
    * @param label edge label
    * @param parentNode parent node
@@ -82,7 +82,7 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I>, I, N extends Radi
   E createEdge(@NotNull String[] label, @NotNull N parentNode);
 
   /**
-   * Method that creates a new node for the de.skuld.radix trie. The edge should not yet be inserted in the trie.
+   * Method that creates a new node for the trie. The edge should not yet be inserted in the trie.
    *
    * @param data node data. May be null if this is not a leaf
    * @param parentEdge parent edge. May be null if this is the root element
@@ -90,4 +90,11 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I>, I, N extends Radi
    */
   @NotNull
   N createNode(@Nullable D data, @Nullable E parentEdge);
+
+  /**
+   * Method that returns a string array of labels for the indexing data. Overriding classes should implement this by delegating it to the implementation of D.
+   * @param indexingData data to index by
+   * @return labels
+   */
+  String[] getLabels(I indexingData);
 }

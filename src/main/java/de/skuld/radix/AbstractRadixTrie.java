@@ -1,10 +1,14 @@
 package de.skuld.radix;
 
+import de.skuld.radix.data.RandomnessRadixTrieData;
+import de.skuld.radix.memory.MemoryRadixTrieNode;
+import de.skuld.radix.memory.StringRadixTrieEdge;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.Optional;
 import java.util.Stack;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -104,4 +108,51 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I>, I, N
     return true;
   }
 
+  @Override
+  public boolean contains(@NotNull I indexingData) {
+    return this.getNode(indexingData).isPresent();
+  }
+
+  @Override
+  public Optional<N> getNode(@NotNull I indexingData) {
+    String[] edgeLabels = this.getLabels(indexingData);
+
+    N currentNode = getRoot();
+
+    int i = 0;
+    boolean advanced = true;
+
+    while(!currentNode.isLeafNode() && advanced) {
+      advanced = false;
+
+      // match
+      if (Arrays.equals(currentNode.getPathFromRoot(), edgeLabels))
+        return Optional.of(currentNode);
+
+      // single edge
+      Optional<E> target = currentNode.getOutgoingEdge(edgeLabels[0]);
+      if (target.isPresent()) {
+        currentNode = target.get().getChild();
+        i++;
+        advanced = true;
+        continue;
+      }
+
+      // summary edge
+      String[] partial = Arrays.copyOfRange(edgeLabels, i, edgeLabels.length);
+      for (E edge : currentNode.getOutgoingEdges()) {
+        if (edge.queryIncludesEdge(partial)) {
+          currentNode = edge.getChild();
+          i += edge.amountOfSummarizedElements();
+          advanced = true;
+          break;
+        }
+      }
+    }
+
+    if (Arrays.equals(currentNode.getPathFromRoot(), edgeLabels))
+      return Optional.of(currentNode);
+
+    return Optional.empty();
+  }
 }

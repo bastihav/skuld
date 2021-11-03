@@ -25,16 +25,6 @@ public class DiskBasedRadixTrie extends
   }
 
   @Override
-  public boolean contains(byte @NotNull [] indexingData) {
-    return false;
-  }
-
-  @Override
-  public Optional<DiskBasedRadixTrieNode> getNode(byte @NotNull [] indexingData) {
-    return Optional.empty();
-  }
-
-  @Override
   public @NotNull PathRadixTrieEdge createEdge(String[] label, @NotNull DiskBasedRadixTrieNode parentNode) {
     Deque<PathRadixTrieEdge> path = parentNode.getEdgesFromRoot();
 
@@ -60,5 +50,10 @@ public class DiskBasedRadixTrie extends
 
     // TODO serialize RandomRadixTrieData into filesystem
     return null;
+  }
+
+  @Override
+  public String[] getLabels(byte[] indexingData) {
+    return RandomnessRadixTrieData.staticToLabels(indexingData);
   }
 }
