@@ -4,42 +4,15 @@ import de.skuld.radix.AbstractRadixTrieNode;
 import de.skuld.radix.RadixTrieEdge;
 import de.skuld.radix.RadixTrieNode;
 import de.skuld.radix.data.RandomnessRadixTrieData;
+import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
 import de.skuld.util.BytePrinter;
 import java.util.Collection;
 import java.util.Optional;
 
-public class DiskBasedRadixTrieNode extends AbstractRadixTrieNode<RandomnessRadixTrieData, PathRadixTrieEdge> implements RadixTrieNode<RandomnessRadixTrieData, PathRadixTrieEdge> {
+public class DiskBasedRadixTrieNode extends AbstractRadixTrieNode<RandomnessRadixTrieData, byte[], RandomnessRadixTrieDataPoint, PathRadixTrieEdge> implements RadixTrieNode<RandomnessRadixTrieData, PathRadixTrieEdge> {
 
-  private final short PARTITION_SIZE = 32;
-  private final byte[] data;
-
-  /**
-   * unsafe constructor
-   */
-  public DiskBasedRadixTrieNode() {
-    this.data = null;
-  }
-
-  public DiskBasedRadixTrieNode(byte[] data) {
-    if (data.length != PARTITION_SIZE) {
-      throw new AssertionError("Node data size must equal partition size!");
-    }
+  public DiskBasedRadixTrieNode(RandomnessRadixTrieData data) {
     this.data = data;
-  }
-
-  @Override
-  public boolean mergeNodes(RadixTrieNode<RandomnessRadixTrieData, PathRadixTrieEdge> other) {
-    return false;
-  }
-
-  @Override
-  public boolean mergeNodes(RandomnessRadixTrieData otherData) {
-    return false;
-  }
-
-  @Override
-  public String[] getPathFromRoot() {
-    return new String[0];
   }
 
   @Override
@@ -54,13 +27,7 @@ public class DiskBasedRadixTrieNode extends AbstractRadixTrieNode<RandomnessRadi
 
   @Override
   public String[] toEdgeDescriptors() {
-    String[] result = new String[data.length];
-
-    for (int i = 0; i < data.length; i++) {
-      result[i] = BytePrinter.byteToHex(data[i]);
-    }
-
-    return result;
+    return new String[0];
   }
 
   @Override
@@ -81,11 +48,6 @@ public class DiskBasedRadixTrieNode extends AbstractRadixTrieNode<RandomnessRadi
   @Override
   public boolean addOutgoingEdge(PathRadixTrieEdge edge) {
     return false;
-  }
-
-  @Override
-  public PathRadixTrieEdge getParentEdge() {
-    return null;
   }
 
   @Override

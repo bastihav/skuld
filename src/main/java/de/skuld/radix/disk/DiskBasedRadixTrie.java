@@ -2,6 +2,7 @@ package de.skuld.radix.disk;
 
 import de.skuld.radix.AbstractRadixTrie;
 import de.skuld.radix.data.RandomnessRadixTrieData;
+import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -11,7 +12,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.jetbrains.annotations.NotNull;
 
 public class DiskBasedRadixTrie extends
-    AbstractRadixTrie<RandomnessRadixTrieData, byte[], DiskBasedRadixTrieNode, PathRadixTrieEdge> {
+    AbstractRadixTrie<RandomnessRadixTrieData, RandomnessRadixTrieDataPoint, byte[], DiskBasedRadixTrieNode, PathRadixTrieEdge> {
 
   private final Path rootPath;
 

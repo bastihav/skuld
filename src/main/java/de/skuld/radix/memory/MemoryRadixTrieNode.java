@@ -4,6 +4,7 @@ import de.skuld.radix.AbstractRadixTrieNode;
 import de.skuld.radix.RadixTrieEdge;
 import de.skuld.radix.RadixTrieNode;
 import de.skuld.radix.data.RandomnessRadixTrieData;
+import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -12,10 +13,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public class MemoryRadixTrieNode extends AbstractRadixTrieNode<RandomnessRadixTrieData, StringRadixTrieEdge> implements RadixTrieNode<RandomnessRadixTrieData, StringRadixTrieEdge> {
+public class MemoryRadixTrieNode extends AbstractRadixTrieNode<RandomnessRadixTrieData, byte[], RandomnessRadixTrieDataPoint, StringRadixTrieEdge> implements RadixTrieNode<RandomnessRadixTrieData, StringRadixTrieEdge> {
 
   Collection<StringRadixTrieEdge> outgoingEdges;
-  public static final MemoryRadixTrieNode DUMMY_NODE = new MemoryRadixTrieNode(new RandomnessRadixTrieData(null, 0, 0));
+  public static final MemoryRadixTrieNode DUMMY_NODE = new MemoryRadixTrieNode(new RandomnessRadixTrieData(null));
 
   public MemoryRadixTrieNode(RandomnessRadixTrieData data) {
     this.data = data;
@@ -29,31 +30,6 @@ public class MemoryRadixTrieNode extends AbstractRadixTrieNode<RandomnessRadixTr
   public MemoryRadixTrieNode(RandomnessRadixTrieData data, StringRadixTrieEdge parentEdge, StringRadixTrieEdge childEdge) {
     this(data, parentEdge);
     this.addOutgoingEdge(parentEdge);
-  }
-
-  public MemoryRadixTrieNode() {
-
-  }
-
-  @Override
-  public boolean mergeNodes(RadixTrieNode<RandomnessRadixTrieData, StringRadixTrieEdge> other) {
-    return false;
-  }
-
-  @Override
-  public boolean mergeNodes(RandomnessRadixTrieData otherData) {
-    return false;
-  }
-
-  @Override
-  public String[] getPathFromRoot() {
-    if (this.getParentEdge() == null) {
-      return new String[0];
-    } else {
-      Stream<String> parent = Arrays.stream(this.getParentEdge().getParent().getPathFromRoot());
-      Stream<String> last = Stream.of(this.getParentEdge().getLabel());
-      return Stream.concat(parent, last).toArray(String[]::new);
-    }
   }
 
   @Override

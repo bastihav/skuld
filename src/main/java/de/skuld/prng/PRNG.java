@@ -19,7 +19,7 @@ public interface PRNG {
   long getDefaultSeed();
 
   /**
-   * @return wether the original implementation uses unix time as default seed
+   * @return whether the original implementation uses unix time as default seed
    */
   boolean usesUnixTimeAsDefault();
 }

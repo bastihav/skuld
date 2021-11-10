@@ -1,4 +1,4 @@
-package de.skuld.radix;
+package de.skuld.radix.controller;
 
 import de.skuld.prng.JavaRandom;
 import de.skuld.prng.PRNG;
@@ -9,17 +9,17 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.LongStream;
 
-public class FillRadixTree {
-
+public class SeedManager {
   // 60 seconds * 60 minutes * 24 hours * 2 days
   private static final int UNIX_TIME_TO_GENERATE = 172800;
+  private final RNGManager rngManager;
 
-  private Collection<Class<? extends PRNG>> getPRNGs() {
-    return Set.of(JavaRandom.class);
+  public SeedManager(RNGManager rngManager) {
+    this.rngManager = rngManager;
   }
 
   /**
-   * Method that returns all seeds that should be used per de.skuld.prng to fill the de.skuld.radix tree
+   * Method that returns all seeds that should be used per prng to fill the radix tree
    *
    * @return seed array
    */
@@ -43,7 +43,7 @@ public class FillRadixTree {
   }
 
   /**
-   * Method that returns the last {@link FillRadixTree#UNIX_TIME_TO_GENERATE} unix timestamps from
+   * Method that returns the last {@link SeedManager#UNIX_TIME_TO_GENERATE} unix timestamps from
    * scanDate downwards
    *
    * @param scanDate date on which a scan should be conducted
@@ -62,7 +62,7 @@ public class FillRadixTree {
   }
 
   private long[] getDefaultSeeds() {
-    Collection<Class<? extends PRNG>> prngs = getPRNGs();
+    Collection<Class<? extends PRNG>> prngs = rngManager.getPRNGs();
 
     Set<Long> seeds = new HashSet<>(prngs.size());
 

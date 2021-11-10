@@ -12,11 +12,12 @@ import org.jetbrains.annotations.Nullable;
  *  Their position is based on the randomness, which is a byte array
  *
  * @param <D> Data that will be stored in leaves
+ * @param <P> type of data points in D
  * @param <I> datatype that describes the position of a node
  * @param <N> Node type
  * @param <E> Edge type
  */
-public interface RadixTrie<D extends AbstractRadixTrieData<I>, I, N extends RadixTrieNode<D, E>, E extends RadixTrieEdge<D, N>> {
+public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extends RadixTrieNode<D, E>, E extends RadixTrieEdge<D, N>> {
 
   /**
    * Method that returns an instance of a dummy node.
