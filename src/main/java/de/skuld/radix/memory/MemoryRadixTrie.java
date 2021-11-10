@@ -15,7 +15,7 @@ public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, 
 
   @Override
   public @NotNull MemoryRadixTrieNode getDummyNode() {
-    return new MemoryRadixTrieNode();
+    return new MemoryRadixTrieNode(null);
   }
 
   @Override

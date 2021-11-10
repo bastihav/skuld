@@ -22,7 +22,7 @@ public class DiskBasedRadixTrie extends
 
   @Override
   public @NotNull DiskBasedRadixTrieNode getDummyNode() {
-    return new DiskBasedRadixTrieNode();
+    return new DiskBasedRadixTrieNode(null);
   }
 
   @Override
