@@ -23,16 +23,18 @@ task generateTestData(type: Exec) {
     commandLine "python", "python.py"
 }
 
-task cleanTestData(type: Exec) {
-    println "running test clean up task"
+task cleanTestData(type: Delete) {
     delete ('src/test/resources/random_data/')
 }
+
+tasks.clean.dependsOn(tasks.cleanTestData)
 
 test {
     dependsOn(generateTestData)
     useJUnitPlatform()
-    finalizedBy jacocoTestReport
+    finalizedBy cleanTestData
 }
+
 jacocoTestReport {
     dependsOn test
 }

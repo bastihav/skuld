@@ -83,11 +83,6 @@ public abstract class AbstractPrngImplTest {
   public void validateRandomGenerator() {
     long[] seeds = getSeeds();
 
-/*    System.out.println(Arrays.toString(seeds));
-
-    Arrays.stream(getActualBytes(seeds)).forEach(BytePrinter::printBytesAsHex);
-    Arrays.stream(getTargetBytes(seeds)).forEach(BytePrinter::printBytesAsHex);
-    System.out.println("done");*/
     assertArrayEquals(getTargetBytes(seeds), getActualBytes(seeds));
   }
 }
