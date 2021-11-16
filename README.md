@@ -1,3 +1,4 @@
+![Logo](logo.png)
 # Skuld
 
 Skuld is a (web-)service which can be used to analyze random bytes to possibly find the algorithm,
