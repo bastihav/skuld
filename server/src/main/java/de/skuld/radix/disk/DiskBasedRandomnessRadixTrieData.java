@@ -4,6 +4,7 @@ import com.google.common.primitives.UnsignedBytes;
 import de.skuld.radix.AbstractRadixTrieData;
 import de.skuld.radix.data.RandomnessRadixTrieData;
 import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
+import de.skuld.util.BytePrinter;
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -15,7 +16,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
 
@@ -38,33 +41,44 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
     if (!p.toFile().exists()) {
       throw new AssertionError("File does not exist");
     } else {
-      // TODO lazy load this
       this.p = p;
     }
   }
 
   @Override
-  public AbstractRadixTrieData<byte[], RandomnessRadixTrieDataPoint> mergeData(AbstractRadixTrieData<byte[], RandomnessRadixTrieDataPoint> other) {
+  public DiskBasedRandomnessRadixTrieData mergeData(AbstractRadixTrieData<byte[], RandomnessRadixTrieDataPoint> other) {
     //System.out.println("merging into " + this.hashCode());
     //System.out.println("other: " + other.hashCode());
 
-    // TODO speed this up by not creating the mbb so often
     //System.out.println("merging data on disk");
 
+    Collection<RandomnessRadixTrieDataPoint> otherDp = other.getDataPoints();
 
-    long amountOfNewData = other.getDataPoints().size() * 38L;
+    long amountOfNewData = otherDp.size() * 38L;
+
+    Stream<RandomnessRadixTrieDataPoint> dpSorted = Stream.concat(this.getDataPoints().stream(), otherDp.stream()).sorted();
+
 
     try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(p, EnumSet.of(
         StandardOpenOption.READ, StandardOpenOption.WRITE))) {
       readSizeInBytes = fileChannel.size();
       writeSizeInBytes = readSizeInBytes + amountOfNewData;
+      System.out.println(writeSizeInBytes + " vs " + Integer.MAX_VALUE);
       mappedByteBuffer = fileChannel.map(MapMode.READ_WRITE, 0, writeSizeInBytes);
+      System.out.println("didnt fail");
     } catch (IOException e) {
       e.printStackTrace();
     }
-    long amountOfDataPoints = readSizeInBytes / 38;
+    //long amountOfDataPoints = readSizeInBytes / 38;
 
-    for (RandomnessRadixTrieDataPoint dp : other.getDataPoints()) {
+
+    dpSorted.forEach(dp -> {
+      mappedByteBuffer.put(dp.serialize());
+    });
+
+
+
+/*    for (RandomnessRadixTrieDataPoint dp : other.getDataPoints()) {
       //System.out.println("dp.getRemainingBytes: " + Arrays.toString(dp.getRemainingBytes()));
       long index = binarySearch(0, Math.max(0,amountOfDataPoints-1), dp.getRemainingBytes());
 
@@ -92,9 +106,9 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
       mappedByteBuffer.position((int) index * 38);
       mappedByteBuffer.put(dp.serialize(trie));
       amountOfDataPoints++;
-    }
+    }*/
 
-    dataPoints.addAll(other.getDataPoints());
+    dataPoints.addAll(otherDp);
 
     //System.out.println("here comes the array");
     //byte[] array  = new byte[(int) sizeInBytes];
@@ -102,7 +116,15 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
     //mappedByteBuffer.get(array);
     //System.out.println(Arrays.toString(array));
 
-    mappedByteBuffer = null;
+    return this;
+  }
+
+  public Collection<RandomnessRadixTrieDataPoint> getDataPointsRaw() {
+    return dataPoints;
+  }
+
+  public DiskBasedRandomnessRadixTrieData mergeDataRaw(DiskBasedRandomnessRadixTrieData other) {
+    this.dataPoints.addAll(other.getDataPointsRaw());
     return this;
   }
 
@@ -130,7 +152,6 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
       } catch (IOException e) {
         e.printStackTrace();
       }
-      mappedByteBuffer = null;
     }
     resolved = true;
     //System.out.println("returning data points: " + this.dataPoints);
@@ -142,7 +163,7 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
     byte[] leastSignificantBytes = Arrays.copyOfRange(query, query.length - 29, query.length);
 
     if (resolved) {
-      return dataPoints.stream().filter(dp -> Arrays.equals(dp.getRemainingBytes(), leastSignificantBytes)).findFirst();
+      return dataPoints.stream().filter(dp -> Arrays.equals(dp.getRemainingIndexingData(), leastSignificantBytes)).findFirst();
     }
     // TODO config length on file system
 
@@ -153,13 +174,16 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
       long amountOfDataPoints = readSizeInBytes / 38;
       long position = binarySearch(0, amountOfDataPoints-1, query);
       byte[] array = new byte[38];
+      /*System.out.println("size: " + readSizeInBytes);
+      System.out.println("pos: " + position);
+      System.out.println("in byte: " + (int) position*38);*/
       mappedByteBuffer.position((int) (position * 38));
       mappedByteBuffer.get(array, 0, 38);
 
       RandomnessRadixTrieDataPoint middleDataPoint = new RandomnessRadixTrieDataPoint(array);
 
       if (UnsignedBytes.lexicographicalComparator().compare(leastSignificantBytes,
-          middleDataPoint.getRemainingBytes()) == 0) {
+          middleDataPoint.getRemainingIndexingData()) == 0) {
         return Optional.of(middleDataPoint);
       } else {
         return Optional.empty();
@@ -167,11 +191,13 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
     } catch (IOException e) {
       e.printStackTrace();
     }
-    mappedByteBuffer = null;
     return Optional.empty();
   }
 
   public long binarySearch(long left, long right, byte[] query) {
+    byte[] leastSignificantBytes = Arrays.copyOfRange(query, query.length - 29, query.length);
+    //System.out.println("query: " + BytePrinter.bytesToHex(query));
+    //System.out.println("least sig: " + BytePrinter.bytesToHex(leastSignificantBytes));
     while (left <= right) {
       long mid = left + (right - left) / 2;
       //System.out.println(left + " " + right + " " + mid +" " + Arrays.toString(query));
@@ -191,15 +217,14 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
 
         /*System.out.println("query is: " + Arrays.toString(query));
         System.out.println(query.length + " vs " + middleDataPoint.getRemainingBytes().length);*/
-        byte[] leastSignificantBytes = Arrays.copyOfRange(query, query.length - middleDataPoint.getRemainingBytes().length, query.length);
 
 
+      //System.out.println("comparing to " + BytePrinter.bytesToHex(middleDataPoint.getRemainingIndexingData()));
         int comparison = UnsignedBytes.lexicographicalComparator().compare(leastSignificantBytes,
-            middleDataPoint.getRemainingBytes());
+            middleDataPoint.getRemainingIndexingData());
         if (comparison < 0) {
           //System.out.println("left");
           right =  mid - 1;
-          break;
         } else if (comparison == 0) {
           //System.out.println("returning mid");
           return mid;

@@ -13,6 +13,7 @@ import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.Stack;
 import org.apache.commons.lang3.tuple.Pair;
@@ -61,14 +62,14 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
 
     //System.out.println(edge);
     if (edge.isPresent()) {
-      return add(edge.get().getChild(), data, indexingData);
+      return this.add(edge.get().getChild(), data, indexingData);
     }
 
       for (E e : parent.getOutgoingEdges()) {
         if (e.isSummary()) {
           // walk this edge
           if (e.queryIncludesEdge(remainingEdges)) {
-            return add(e.getChild(), data, indexingData);
+            return this.add(e.getChild(), data, indexingData);
           }
 
           int size = 0;
@@ -83,7 +84,7 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
           if (size > 0) {
             // merge nodes
             if (size == remainingEdges.length) {
-              return add(e.getChild(), data, indexingData);
+              return this.add(e.getChild(), data, indexingData);
             } else {
               // split edge
               //System.out.println("in split case!");
@@ -103,7 +104,7 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
 
               moveSubtree(oldSubtree, secondEdge, middleNode);
 
-              return add(middleNode, data, indexingData);
+              return this.add(middleNode, data, indexingData);
             }
           }
 
@@ -130,30 +131,24 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
 
       N newNode = this.createNode(null, newEdge);
 
-      return add(newNode, data, indexingData);
+      return this.add(newNode, data, indexingData);
     } else {
       //System.out.println("apparently adding " + data + " with " + Arrays.toString((byte[]) indexingData) + " under " + parent);
       //System.out.println("covered: " + Arrays.toString(coveredEdges));
-      // TODO tell datapoints that they have remaining data right here
       Collection<P> dataPoints = data.getDataPoints();
       if (dataPoints.size() > 0 && dataPoints.stream().findFirst()
           .get() instanceof RandomnessRadixTrieDataPoint) {
         //System.out.println("adding the remaining edges ");
         Collection<RandomnessRadixTrieDataPoint> dataPointCollection = (Collection<RandomnessRadixTrieDataPoint>) dataPoints;
 
-        byte[] remainingBytes = new byte[remainingEdges.length];
-        for (int i = 0; i < remainingEdges.length; i++) {
-          remainingBytes[i] = BaseEncoding.base16().decode(remainingEdges[i])[0];
-        }
-
-        dataPointCollection.forEach(dp -> dp.setRemainingBytes(remainingBytes));
+        dataPointCollection.forEach(dp -> dp.removePrefixFromRemainingIndexingData(coveredEdges.length));
       }
 
       // merge instead
       Optional<E> table = parent.getOutgoingEdges().stream().findFirst();
       if (table.isPresent()) {
         //System.out.println("adding under first child! ");
-        return add(table.get().getChild(), data, indexingData);
+        return this.add(table.get().getChild(), data, indexingData);
       }
 
       // todo: config
@@ -230,9 +225,9 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
 
     String[] pathFromRoot = currentNode.getPathFromRoot();
 
-    /*System.out.println("I went all the way to " + Arrays.toString(pathFromRoot));
-    System.out.println("Looking for " + Arrays.toString(edgeLabels));
-*/
+    //System.out.println("I went all the way to " + Arrays.toString(pathFromRoot));
+    //System.out.println("Looking for " + Arrays.toString(edgeLabels));
+
     if (!currentNode.isLeafNode()) {
       return Optional.empty();
     }

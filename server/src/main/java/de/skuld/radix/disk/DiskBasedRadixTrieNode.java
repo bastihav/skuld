@@ -6,10 +6,16 @@ import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileChannel.MapMode;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -77,17 +83,36 @@ public class DiskBasedRadixTrieNode extends AbstractRadixTrieNode<DiskBasedRando
       e.printStackTrace();
     }
 
-    try (FileOutputStream fileOutputStream = new FileOutputStream(file, true)) {
-      /*for (RandomnessRadixTrieDataPoint randomnessRadixTrieDataPoint : data.getDataPoints()) {
+    try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(), EnumSet.of(
+        StandardOpenOption.READ, StandardOpenOption.WRITE))) {
+      long readSizeInBytes = fileChannel.size();
+      if (readSizeInBytes != 0) {
+        System.out.println("File Should be empty");
+      }
+      //System.out.println("serializing data");
+      byte[] serializedData = this.data.serialize(trie);
+      //System.out.println("serialized data");
+      long writeSizeInBytes = readSizeInBytes + serializedData.length;
+      MappedByteBuffer mappedByteBuffer = fileChannel.map(MapMode.READ_WRITE, 0, writeSizeInBytes);
+      mappedByteBuffer.position(0);
+      //System.out.println("allocated mem");
+      mappedByteBuffer.put(serializedData);
+
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    /*try (FileOutputStream fileOutputStream = new FileOutputStream(file, true)) {
+      *//*for (RandomnessRadixTrieDataPoint randomnessRadixTrieDataPoint : data.getDataPoints()) {
         ImplementedPRNGs rng = randomnessRadixTrieDataPoint.getRng();
         fileOutputStream.write(rng.ordinal());
-      }*/
-      fileOutputStream.write(this.data.serialize(trie));
+      }*//*
+      fileOutputStream.write();
       //fileOutputStream.write(new byte[]{0x00,0x01,0x1F,0x6F});
       fileOutputStream.flush();
     } catch (IOException e) {
       e.printStackTrace();
-    }
+    }*/
 
     //throw new NotImplementedException("serializeee");
     return "";

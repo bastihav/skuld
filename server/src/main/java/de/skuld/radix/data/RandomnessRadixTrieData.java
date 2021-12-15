@@ -1,15 +1,14 @@
 package de.skuld.radix.data;
 
 import com.google.common.primitives.Bytes;
-import de.skuld.prng.ImplementedPRNGs;
 import de.skuld.radix.AbstractRadixTrieData;
 import de.skuld.radix.disk.DiskBasedRadixTrie;
 import de.skuld.util.BytePrinter;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class RandomnessRadixTrieData extends AbstractRadixTrieData<byte[], RandomnessRadixTrieDataPoint> {
   protected final Set<RandomnessRadixTrieDataPoint> dataPoints;
@@ -26,7 +25,7 @@ public class RandomnessRadixTrieData extends AbstractRadixTrieData<byte[], Rando
   }
 
   @Override
-  public AbstractRadixTrieData<byte[], RandomnessRadixTrieDataPoint> mergeData(AbstractRadixTrieData<byte[], RandomnessRadixTrieDataPoint> other) {
+  public RandomnessRadixTrieData mergeData(AbstractRadixTrieData<byte[], RandomnessRadixTrieDataPoint> other) {
     //System.out.println("calling merger ");
     this.dataPoints.addAll(other.getDataPoints());
     //System.out.println(this.dataPoints);
@@ -34,7 +33,19 @@ public class RandomnessRadixTrieData extends AbstractRadixTrieData<byte[], Rando
   }
 
   public byte[] serialize(DiskBasedRadixTrie trie) {
-    return dataPoints.stream().map(dp -> dp.serialize(trie)).reduce(Bytes::concat).orElseGet(() -> new byte[0]);
+    // TODO config
+    //System.out.println("allocating array");
+    byte[] serializedData = new byte[dataPoints.size() * 38];
+    //System.out.println("filling array");
+
+    AtomicInteger index = new AtomicInteger();
+    dataPoints.stream().forEach(dp -> {
+      dp.serialize(serializedData, index.get());
+      index.addAndGet(38);
+    });
+    //System.out.println("filled array");
+
+    return serializedData;
   }
 
   @Override

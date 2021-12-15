@@ -21,7 +21,7 @@ public class RadixTrieTest {
       randomness[i] = 0;
     }
 
-    RandomnessRadixTrieData data = new RandomnessRadixTrieData(new RandomnessRadixTrieDataPoint(ImplementedPRNGs.JAVA_RANDOM, 0,
+    RandomnessRadixTrieData data = new RandomnessRadixTrieData(new RandomnessRadixTrieDataPoint(randomness, ImplementedPRNGs.JAVA_RANDOM, 0,
         42));
 
     byte[] randomness2 = new byte[32];
@@ -32,10 +32,10 @@ public class RadixTrieTest {
       randomness2[i] = 5;
     }
 
-    RandomnessRadixTrieData data2 = new RandomnessRadixTrieData(new RandomnessRadixTrieDataPoint(ImplementedPRNGs.JAVA_RANDOM, 1,
+    RandomnessRadixTrieData data2 = new RandomnessRadixTrieData(new RandomnessRadixTrieDataPoint(randomness2, ImplementedPRNGs.JAVA_RANDOM, 1,
         421));
 
-    RandomnessRadixTrieData data3 = new RandomnessRadixTrieData(new RandomnessRadixTrieDataPoint(ImplementedPRNGs.JAVA_RANDOM, 2,
+    RandomnessRadixTrieData data3 = new RandomnessRadixTrieData(new RandomnessRadixTrieDataPoint(randomness2, ImplementedPRNGs.JAVA_RANDOM, 2,
         422));
 
     trie.add(data, randomness);

@@ -12,6 +12,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.BufferOverflowException;
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -23,8 +24,10 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Deque;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Optional;
+import org.apache.commons.math3.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +35,8 @@ public class DiskBasedRadixTrie extends
     AbstractRadixTrie<DiskBasedRandomnessRadixTrieData, RandomnessRadixTrieDataPoint, byte[], DiskBasedRadixTrieNode, PathRadixTrieEdge> {
 
   private final Path rootPath;
+  private HashMap<ByteBuffer, Pair<DiskBasedRandomnessRadixTrieData, byte[]>> memoryCache;
+  private long cacheSize;
 
   /**
    * Creates a new DiskBasedRadixTrie at the specified location.
@@ -50,6 +55,10 @@ public class DiskBasedRadixTrie extends
       long[] seeds = seedManager.getSeeds(Objects.requireNonNullElse(date, new Date()));
       fillSeedMap(seeds);
       serializeSeedMap();
+    }
+    // TODO CONFIG
+    if (true) {
+      this.memoryCache = new HashMap<>();
     }
   }
 
@@ -167,5 +176,45 @@ public class DiskBasedRadixTrie extends
     }
 
     //System.out.println("420 is " + seedMap.get(420));
+  }
+
+  private boolean usesCache() {
+    return this.memoryCache != null;
+  }
+
+  @Override
+  public boolean add(@NotNull DiskBasedRadixTrieNode parent,
+      @NotNull DiskBasedRandomnessRadixTrieData data, byte @NotNull [] indexingData) {
+    if (parent == root && usesCache()) {
+
+      // TODO config length of cache key
+
+      Pair<DiskBasedRandomnessRadixTrieData, byte[]> pair = new Pair<>(data, indexingData);
+
+      ByteBuffer buffer = ByteBuffer.wrap(Arrays.copyOfRange(indexingData, 0, 3));
+      //data.getDataPoints().forEach(dp -> dp.setRemainingBytes(Arrays.copyOfRange(indexingData, 3, indexingData.length)));
+      this.memoryCache.merge(buffer, pair, (old, latest) -> {
+        old.getFirst().mergeDataRaw(latest.getFirst());
+        return old;
+      });
+      cacheSize++;
+
+      // TODO config ~ roughly 2 GB
+      if (cacheSize >= 56000000) {
+        flushCache();
+      }
+
+      return true;
+    } else {
+      return super.add(parent, data, indexingData);
+    }
+  }
+
+  public void flushCache() {
+    // TODO sort before and add collection, which will in turn add whole subtrees?
+    memoryCache.forEach((key, value) -> super.add(root, value.getKey(), value.getValue()));
+    System.out.println("flushed");
+    cacheSize = 0;
+    this.memoryCache = new HashMap<>();
   }
 }

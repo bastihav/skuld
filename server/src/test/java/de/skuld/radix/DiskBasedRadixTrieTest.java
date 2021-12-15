@@ -17,6 +17,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileAttribute;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Optional;
 import java.util.Random;
@@ -41,7 +44,7 @@ public class DiskBasedRadixTrieTest {
     }
 
     DiskBasedRandomnessRadixTrieData data = new DiskBasedRandomnessRadixTrieData(new RandomnessRadixTrieDataPoint(
-        ImplementedPRNGs.JAVA_RANDOM, 0,
+        randomness, ImplementedPRNGs.JAVA_RANDOM, 0,
         42), trie);
 
     byte[] randomness2 = new byte[32];
@@ -51,7 +54,7 @@ public class DiskBasedRadixTrieTest {
     randomness2[0] = 0;
 
     DiskBasedRandomnessRadixTrieData data2 = new DiskBasedRandomnessRadixTrieData(new RandomnessRadixTrieDataPoint(
-        ImplementedPRNGs.JAVA_RANDOM, 0,
+        randomness2, ImplementedPRNGs.JAVA_RANDOM, 0,
         42), trie);
 
     byte[] randomness3 = new byte[32];
@@ -62,7 +65,7 @@ public class DiskBasedRadixTrieTest {
     randomness3[1] = 0;
 
     DiskBasedRandomnessRadixTrieData data3 = new DiskBasedRandomnessRadixTrieData(new RandomnessRadixTrieDataPoint(
-        ImplementedPRNGs.JAVA_RANDOM, 0,
+        randomness3, ImplementedPRNGs.JAVA_RANDOM, 0,
         42), trie);
 
     byte[] randomness4 = new byte[32];
@@ -74,7 +77,7 @@ public class DiskBasedRadixTrieTest {
     randomness4[2] = 0;
 
     DiskBasedRandomnessRadixTrieData data4 = new DiskBasedRandomnessRadixTrieData(new RandomnessRadixTrieDataPoint(
-        ImplementedPRNGs.JAVA_RANDOM, 0,
+        randomness4, ImplementedPRNGs.JAVA_RANDOM, 0,
         42), trie);
 
     System.out.println("created data for test " + data.hashCode());
@@ -103,16 +106,17 @@ public class DiskBasedRadixTrieTest {
   public void writePerformanceTest() throws IOException {
     Path tempDir = Paths.get("G:\\skuld\\");
 
-    File dataFile = tempDir.resolve("performanceSpeedup.csv").toFile();
+    /*String date = new SimpleDateFormat("yyyy_MM_dd_HH_mm").format(new Date());
+    File dataFile = tempDir.resolve("performance_write_" + date + ".csv").toFile();
 
     if (!dataFile.exists()) {
       dataFile.createNewFile();
-    }
+    }*/
 
     int testSize = 312500;
 
-    long[] dataPoints = new long[testSize];
-
+    //long[] dataPoints = new long[testSize];
+    long ping = System.nanoTime();
       DiskBasedRadixTrie trie = new DiskBasedRadixTrie(tempDir, null);
       Random random = new Random(0);
 
@@ -120,24 +124,149 @@ public class DiskBasedRadixTrieTest {
         byte[] randomness = new byte[32];
         random.nextBytes(randomness);
 
-        long ping = System.nanoTime();
-        DiskBasedRandomnessRadixTrieData data = new DiskBasedRandomnessRadixTrieData(new RandomnessRadixTrieDataPoint(
+
+        DiskBasedRandomnessRadixTrieData data = new DiskBasedRandomnessRadixTrieData(new RandomnessRadixTrieDataPoint(randomness,
             ImplementedPRNGs.JAVA_RANDOM, 0,
             i * 32), trie);
 
         trie.add(data, randomness);
 
-        long pong = System.nanoTime();
-        dataPoints[i] = pong - ping;
         if (i % 500 == 0)
           System.out.println(i);
-      }
 
-      try(PrintWriter printWriter = new PrintWriter(dataFile)) {
+      }
+    trie.flushCache();
+    long pong = System.nanoTime();
+
+    System.out.println(pong-ping);
+
+      /*try(PrintWriter printWriter = new PrintWriter(dataFile)) {
         for (int i = 0; i < testSize; i++) {
           printWriter.println(dataPoints[i] + ',');
         }
+      }*/
+  }
+
+  @Test
+  @Ignore
+  public void writePerformanceSameNodeRandomTest() throws IOException {
+    Path tempDir = Paths.get("G:\\skuld\\");
+
+    /*String date = new SimpleDateFormat("yyyy_MM_dd_HH_mm").format(new Date());
+    File dataFile = tempDir.resolve("performance_write_" + date + ".csv").toFile();
+
+    if (!dataFile.exists()) {
+      dataFile.createNewFile();
+    }*/
+
+    int testSize = 7000;
+
+    //long[] dataPoints = new long[testSize];
+    long ping = System.nanoTime();
+    DiskBasedRadixTrie trie = new DiskBasedRadixTrie(tempDir, null);
+    Random random = new Random(0);
+
+    for (int i = 0; i < testSize; i++) {
+      byte[] randomness = new byte[32];
+      random.nextBytes(randomness);
+      randomness[0] = 0;
+      randomness[1] = 0;
+      randomness[2] = 0;
+
+
+      DiskBasedRandomnessRadixTrieData data = new DiskBasedRandomnessRadixTrieData(new RandomnessRadixTrieDataPoint(randomness,
+          ImplementedPRNGs.JAVA_RANDOM, 0,
+          i * 32), trie);
+
+      trie.add(data, randomness);
+
+      if (i % 500 == 0)
+        System.out.println(i);
+
+    }
+    trie.flushCache();
+    long pong = System.nanoTime();
+
+    System.out.println(pong-ping);
+
+      /*try(PrintWriter printWriter = new PrintWriter(dataFile)) {
+        for (int i = 0; i < testSize; i++) {
+          printWriter.println(dataPoints[i] + ',');
+        }
+      }*/
+  }
+
+  @Test
+  @Ignore
+  public void writePerformanceSameNodeSortedTest() throws IOException {
+    Path tempDir = Paths.get("G:\\skuld\\");
+
+    /*String date = new SimpleDateFormat("yyyy_MM_dd_HH_mm").format(new Date());
+    File dataFile = tempDir.resolve("performance_write_" + date + ".csv").toFile();
+
+    if (!dataFile.exists()) {
+      dataFile.createNewFile();
+    }*/
+
+    int testSize = 4;
+    //int testSize = 1700000;
+
+    //long[] dataPoints = new long[testSize];
+    long ping = System.nanoTime();
+    DiskBasedRadixTrie trie = new DiskBasedRadixTrie(tempDir, null);
+    Random random = new Random(0);
+
+
+    byte[] randomness = new byte[32];
+    random.nextBytes(randomness);
+
+    for (int i = 0; i < testSize; i++) {
+      byte[] number = Ints.toByteArray(i);
+      randomness[31] = number[3];
+      randomness[30] = number[2];
+      randomness[29] = number[1];
+      randomness[28] = number[0];
+      //System.out.println("inserting " + Arrays.toString(randomness));
+
+      DiskBasedRandomnessRadixTrieData data = new DiskBasedRandomnessRadixTrieData(new RandomnessRadixTrieDataPoint(randomness,
+          ImplementedPRNGs.JAVA_RANDOM, 0,
+          i * 32), trie);
+
+      trie.add(data, Arrays.copyOf(randomness, randomness.length));
+
+      if (i % 500 == 0)
+        System.out.println(i);
+    }
+    trie.flushCache();
+    long pong = System.nanoTime();
+
+    System.out.println("write: " + (pong-ping));
+
+    ping = System.nanoTime();
+
+
+    byte[] number = Ints.toByteArray(2);
+    randomness[31] = number[3];
+    randomness[30] = number[2];
+    randomness[29] = number[1];
+    randomness[28] = number[0];
+    Optional<DiskBasedRadixTrieNode> node = trie.getNode(randomness);
+    if (node.isPresent()) {
+      System.out.println("node found ");
+      Optional<RandomnessRadixTrieDataPoint> dp = node.get().getData().getDataPoint(randomness);
+      if (dp.isPresent()) {
+        System.out.println("found dp");
       }
+    }
+    pong = System.nanoTime();
+
+    System.out.println("read: " + (pong-ping));
+
+      /*try(PrintWriter printWriter = new PrintWriter(dataFile)) {
+        for (int i = 0; i < testSize; i++) {
+          printWriter.println(dataPoints[i] + ',');
+        }
+      }*/
   }
 
   @Test
@@ -169,7 +298,7 @@ public class DiskBasedRadixTrieTest {
 
       long ping = System.nanoTime();
       DiskBasedRandomnessRadixTrieData data = new DiskBasedRandomnessRadixTrieData(new RandomnessRadixTrieDataPoint(
-          ImplementedPRNGs.JAVA_RANDOM, 0,
+          randomness, ImplementedPRNGs.JAVA_RANDOM, 0,
           i * 32), trie);
 
       trie.add(data, randomness);
@@ -192,7 +321,8 @@ public class DiskBasedRadixTrieTest {
   public void readPerformanceTest() throws IOException {
     Path tempDir = Paths.get("G:\\skuld\\");
 
-    File dataFile = tempDir.resolve("performanceRead.csv").toFile();
+    String date = new SimpleDateFormat("yyyy_MM_dd_HH_mm").format(new Date());
+    File dataFile = tempDir.resolve("performanceRead_" + date + ".csv").toFile();
 
     if (!dataFile.exists()) {
       dataFile.createNewFile();
