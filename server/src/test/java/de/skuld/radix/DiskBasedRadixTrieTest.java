@@ -16,14 +16,14 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Optional;
 import java.util.Random;
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 
 public class DiskBasedRadixTrieTest {
 
   @Test
-  @Ignore
+  @Disabled
   public void test() throws IOException {
     Path tempDir = Paths.get("G:\\skuld\\");
     //Path tempDir = Files.createTempDirectory("skuld");
@@ -93,7 +93,7 @@ public class DiskBasedRadixTrieTest {
   }
 
   @Test
-  @Ignore
+  @Disabled
   public void testParentEdges() throws IOException {
     DiskBasedRadixTrieNode n = new DiskBasedRadixTrieNode(false, null, Paths
         .get("C:\\Users\\basti\\AppData\\Local\\Temp\\skuld6523388402481457665\\00\\00\\00\\00"),
@@ -102,7 +102,7 @@ public class DiskBasedRadixTrieTest {
   }
 
   @Test
-  @Ignore
+  @Disabled
   public void writePerformanceTest() throws IOException {
     Path tempDir = Paths.get("G:\\skuld\\");
 
@@ -149,7 +149,7 @@ public class DiskBasedRadixTrieTest {
   }
 
   @Test
-  @Ignore
+  @Disabled
   public void writePerformanceSameNodeRandomTest() throws IOException {
     Path tempDir = Paths.get("G:\\skuld\\");
 
@@ -199,7 +199,7 @@ public class DiskBasedRadixTrieTest {
   }
 
   @Test
-  @Ignore
+  @Disabled
   public void writePerformanceSameNodeSortedTest() throws IOException {
     Path tempDir = Paths.get("G:\\skuld\\");
 
@@ -272,7 +272,7 @@ public class DiskBasedRadixTrieTest {
   }
 
   @Test
-  @Ignore
+  @Disabled
   public void writeWorstCasePerformanceTest() throws IOException {
     Path tempDir = Paths.get("G:\\skuld\\");
 
@@ -321,7 +321,7 @@ public class DiskBasedRadixTrieTest {
   }
 
   @Test
-  @Ignore
+  @Disabled
   public void readPerformanceTest() throws IOException {
     Path tempDir = Paths.get("G:\\skuld\\");
 

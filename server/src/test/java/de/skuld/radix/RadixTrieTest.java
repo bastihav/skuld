@@ -7,11 +7,13 @@ import de.skuld.prng.ImplementedPRNGs;
 import de.skuld.radix.data.RandomnessRadixTrieData;
 import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
 import de.skuld.radix.memory.MemoryRadixTrie;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class RadixTrieTest {
 
   @Test
+  @Disabled
   public void testInsertion() {
     MemoryRadixTrie trie = new MemoryRadixTrie();
 
