@@ -3,6 +3,7 @@ package de.skuld.prng;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 import java.util.Arrays;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -81,6 +82,7 @@ public abstract class AbstractPrngImplTest {
   abstract byte[] getActualBytes(long seed, int amountPerSeed);
 
   @Test
+  @Disabled
   public void validateRandomGenerator() {
     long[] seeds = getSeeds();
     System.out.println("java: ");
