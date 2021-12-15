@@ -1,17 +1,12 @@
 package de.skuld.radix.memory;
 
 import de.skuld.radix.AbstractRadixTrie;
-import de.skuld.radix.RadixTrieEdge;
-import de.skuld.radix.RadixTrieNode;
 import de.skuld.radix.data.RandomnessRadixTrieData;
 import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
-import de.skuld.radix.disk.DiskBasedRadixTrieNode;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
-public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, RandomnessRadixTrieDataPoint, byte[], MemoryRadixTrieNode, StringRadixTrieEdge> {
+public class MemoryRadixTrie extends
+    AbstractRadixTrie<RandomnessRadixTrieData, RandomnessRadixTrieDataPoint, byte[], MemoryRadixTrieNode, StringRadixTrieEdge> {
 
   @Override
   public @NotNull MemoryRadixTrieNode getDummyNode() {
@@ -24,7 +19,8 @@ public class MemoryRadixTrie extends AbstractRadixTrie<RandomnessRadixTrieData, 
   }
 
   @Override
-  public @NotNull StringRadixTrieEdge createEdge(String[] label, @NotNull MemoryRadixTrieNode parentNode) {
+  public @NotNull StringRadixTrieEdge createEdge(String[] label,
+      @NotNull MemoryRadixTrieNode parentNode) {
     StringRadixTrieEdge edge = new StringRadixTrieEdge(label);
     edge.setParent(parentNode);
     parentNode.addOutgoingEdge(edge);

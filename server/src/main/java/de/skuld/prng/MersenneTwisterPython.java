@@ -4,7 +4,8 @@ import java.util.Arrays;
 import org.apache.commons.math3.random.MersenneTwister;
 
 /**
- * Implements https://github.com/python/cpython/blob/3.10/Lib/random.py with seeding variant version 2
+ * Implements https://github.com/python/cpython/blob/3.10/Lib/random.py with seeding variant version
+ * 2
  */
 public class MersenneTwisterPython implements SeedablePRNG {
 
@@ -43,11 +44,11 @@ public class MersenneTwisterPython implements SeedablePRNG {
     }*/
     int[] intArray;
     if (Long.numberOfLeadingZeros(seed) >= 32) {
-      intArray = new int[] { (int) seed };
+      intArray = new int[]{(int) seed};
     } else {
-      intArray = new int[] { (int) seed, (int) (seed >> 32) };
+      intArray = new int[]{(int) seed, (int) (seed >> 32)};
     }
-    System.out.println("seed as array " +Arrays.toString(intArray));
+    System.out.println("seed as array " + Arrays.toString(intArray));
     twister.setSeed(intArray);
     //twister.setSeed(seed);
     System.out.println(twister);

@@ -12,7 +12,7 @@ public class BytePrinter {
   }
 
   public static String byteToHex(byte b) {
-    return String.format("%02X",b);
+    return String.format("%02X", b);
   }
 
   public static void printBytesAsHex(byte[] bytes) {

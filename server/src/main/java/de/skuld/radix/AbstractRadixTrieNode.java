@@ -5,12 +5,13 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.stream.Stream;
 
-public abstract class AbstractRadixTrieNode<D extends AbstractRadixTrieData<I, P>, I, P, E extends RadixTrieEdge<D, ? extends RadixTrieNode<D, E>>> implements RadixTrieNode<D, E> {
+public abstract class AbstractRadixTrieNode<D extends AbstractRadixTrieData<I, P>, I, P, E extends RadixTrieEdge<D, ? extends RadixTrieNode<D, E>>> implements
+    RadixTrieNode<D, E> {
 
+  protected final boolean isRoot;
+  protected final AbstractRadixTrie<D, P, I, ? extends RadixTrieNode<D, E>, ? extends RadixTrieEdge<D, ? extends RadixTrieNode<D, E>>> trie;
   protected D data;
   protected E parentEdge;
-  protected final boolean isRoot;
-  protected final AbstractRadixTrie<D, P, I, ? extends RadixTrieNode<D, E>, ? extends RadixTrieEdge<D, ? extends RadixTrieNode<D,E>>> trie;
 
   protected AbstractRadixTrieNode(boolean isRoot,
       AbstractRadixTrie<D, P, I, ? extends RadixTrieNode<D, E>, ? extends RadixTrieEdge<D, ? extends RadixTrieNode<D, E>>> trie) {

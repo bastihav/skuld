@@ -1,16 +1,18 @@
 package de.skuld.radix.data;
 
-import com.google.common.primitives.Bytes;
 import de.skuld.radix.AbstractRadixTrieData;
 import de.skuld.radix.disk.DiskBasedRadixTrie;
 import de.skuld.util.BytePrinter;
+import de.skuld.util.ConfigurationHelper;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class RandomnessRadixTrieData extends AbstractRadixTrieData<byte[], RandomnessRadixTrieDataPoint> {
+public class RandomnessRadixTrieData extends
+    AbstractRadixTrieData<byte[], RandomnessRadixTrieDataPoint> {
+
   protected final Set<RandomnessRadixTrieDataPoint> dataPoints;
 
   public RandomnessRadixTrieData(RandomnessRadixTrieDataPoint data) {
@@ -24,26 +26,33 @@ public class RandomnessRadixTrieData extends AbstractRadixTrieData<byte[], Rando
     this.dataPoints = data;
   }
 
+  public static String[] staticToLabels(byte[] data) {
+    String[] result = new String[data.length];
+
+    for (int i = 0; i < data.length; i++) {
+      result[i] = BytePrinter.byteToHex(data[i]);
+    }
+
+    return result;
+  }
+
   @Override
-  public RandomnessRadixTrieData mergeData(AbstractRadixTrieData<byte[], RandomnessRadixTrieDataPoint> other) {
-    //System.out.println("calling merger ");
+  public RandomnessRadixTrieData mergeData(
+      AbstractRadixTrieData<byte[], RandomnessRadixTrieDataPoint> other) {
     this.dataPoints.addAll(other.getDataPoints());
-    //System.out.println(this.dataPoints);
     return this;
   }
 
   public byte[] serialize(DiskBasedRadixTrie trie) {
-    // TODO config
-    //System.out.println("allocating array");
-    byte[] serializedData = new byte[dataPoints.size() * 38];
-    //System.out.println("filling array");
+    int partitionSizeOnDisk = ConfigurationHelper.getConfig().getInt("radix.partition.serialized");
+    byte[] serializedData = new byte[dataPoints.size() * ConfigurationHelper.getConfig()
+        .getInt("radix.partition.serialized")];
 
     AtomicInteger index = new AtomicInteger();
-    dataPoints.stream().forEach(dp -> {
+    dataPoints.forEach(dp -> {
       dp.serialize(serializedData, index.get());
-      index.addAndGet(38);
+      index.addAndGet(partitionSizeOnDisk);
     });
-    //System.out.println("filled array");
 
     return serializedData;
   }
@@ -58,16 +67,6 @@ public class RandomnessRadixTrieData extends AbstractRadixTrieData<byte[], Rando
     return RandomnessRadixTrieData.staticToLabels(data);
   }
 
-  public static String[] staticToLabels(byte[] data) {
-    String[] result = new String[data.length];
-
-    for (int i = 0; i < data.length; i++) {
-      result[i] = BytePrinter.byteToHex(data[i]);
-    }
-
-    return result;
-  }
-
   @Override
   public String concatenateLabels() {
     // TODO
@@ -76,7 +75,7 @@ public class RandomnessRadixTrieData extends AbstractRadixTrieData<byte[], Rando
 
   @Override
   public String concatenateLabels(String[] labels) {
-    return Arrays.stream(labels).reduce((a,b) -> a + getSeparator() + b).orElse("");
+    return Arrays.stream(labels).reduce((a, b) -> a + getSeparator() + b).orElse("");
   }
 
   @Override

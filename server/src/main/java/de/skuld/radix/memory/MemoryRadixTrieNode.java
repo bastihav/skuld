@@ -10,22 +10,27 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 
-public class MemoryRadixTrieNode extends AbstractRadixTrieNode<RandomnessRadixTrieData, byte[], RandomnessRadixTrieDataPoint, StringRadixTrieEdge> implements RadixTrieNode<RandomnessRadixTrieData, StringRadixTrieEdge> {
+public class MemoryRadixTrieNode extends
+    AbstractRadixTrieNode<RandomnessRadixTrieData, byte[], RandomnessRadixTrieDataPoint, StringRadixTrieEdge> implements
+    RadixTrieNode<RandomnessRadixTrieData, StringRadixTrieEdge> {
 
+  public static final MemoryRadixTrieNode DUMMY_NODE = new MemoryRadixTrieNode(false,
+      new RandomnessRadixTrieData(null), null);
   Collection<StringRadixTrieEdge> outgoingEdges;
-  public static final MemoryRadixTrieNode DUMMY_NODE = new MemoryRadixTrieNode(false, new RandomnessRadixTrieData(null), null);
 
   public MemoryRadixTrieNode(boolean isRoot, RandomnessRadixTrieData data, MemoryRadixTrie trie) {
     super(isRoot, trie);
     this.data = data;
   }
 
-  public MemoryRadixTrieNode(boolean isRoot,  RandomnessRadixTrieData data, MemoryRadixTrie trie, StringRadixTrieEdge parentEdge) {
+  public MemoryRadixTrieNode(boolean isRoot, RandomnessRadixTrieData data, MemoryRadixTrie trie,
+      StringRadixTrieEdge parentEdge) {
     this(isRoot, data, trie);
     this.parentEdge = parentEdge;
   }
 
-  public MemoryRadixTrieNode(boolean isRoot,  RandomnessRadixTrieData data, MemoryRadixTrie trie, StringRadixTrieEdge parentEdge, StringRadixTrieEdge childEdge) {
+  public MemoryRadixTrieNode(boolean isRoot, RandomnessRadixTrieData data, MemoryRadixTrie trie,
+      StringRadixTrieEdge parentEdge, StringRadixTrieEdge childEdge) {
     this(isRoot, data, trie, parentEdge);
     this.addOutgoingEdge(parentEdge);
   }
@@ -52,7 +57,8 @@ public class MemoryRadixTrieNode extends AbstractRadixTrieNode<RandomnessRadixTr
 
   @Override
   public Optional<StringRadixTrieEdge> getOutgoingEdge(String label) {
-    return getOutgoingEdges().stream().filter(e -> e.getLabel().length == 1 && e.getLabel()[0].equals(label)).findFirst();
+    return getOutgoingEdges().stream()
+        .filter(e -> e.getLabel().length == 1 && e.getLabel()[0].equals(label)).findFirst();
   }
 
   @Override

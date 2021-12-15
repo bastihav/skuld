@@ -1,10 +1,10 @@
 package de.skuld.radix;
 
-import java.util.ArrayDeque;
 import java.util.Arrays;
-import java.util.Deque;
 
-public abstract class AbstractRadixTrieEdge<D extends AbstractRadixTrieData, N extends RadixTrieNode<D, ? extends RadixTrieEdge<D, N>>> implements RadixTrieEdge<D, N> {
+public abstract class AbstractRadixTrieEdge<D extends AbstractRadixTrieData, N extends RadixTrieNode<D, ? extends RadixTrieEdge<D, N>>> implements
+    RadixTrieEdge<D, N> {
+
   protected N child;
   protected N parent;
   protected String[] label;
@@ -33,7 +33,9 @@ public abstract class AbstractRadixTrieEdge<D extends AbstractRadixTrieData, N e
 
   @Override
   public boolean edgeIncludesQuery(String[] query) {
-    if (label.length < query.length) return false;
+    if (label.length < query.length) {
+      return false;
+    }
 
     for (int i = 0; i < query.length; i++) {
       if (!query[i].equals(label[i])) {
@@ -50,7 +52,9 @@ public abstract class AbstractRadixTrieEdge<D extends AbstractRadixTrieData, N e
 
   @Override
   public boolean queryIncludesEdge(String[] query) {
-    if (label.length > query.length) return false;
+    if (label.length > query.length) {
+      return false;
+    }
 
     for (int i = 0; i < label.length; i++) {
       if (!query[i].equals(label[i])) {
@@ -76,14 +80,14 @@ public abstract class AbstractRadixTrieEdge<D extends AbstractRadixTrieData, N e
   }
 
   @Override
+  public void setParent(N parent) {
+    this.parent = parent;
+  }
+
+  @Override
   public String toString() {
     return "AbstractRadixTrieEdge{" +
         "label='" + Arrays.toString(label) + '\'' +
         '}';
-  }
-
-  @Override
-  public void setParent(N parent) {
-    this.parent = parent;
   }
 }

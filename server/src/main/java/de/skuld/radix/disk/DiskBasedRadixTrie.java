@@ -5,13 +5,8 @@ import de.skuld.radix.controller.RNGManager;
 import de.skuld.radix.controller.SeedManager;
 import de.skuld.radix.data.RandomnessRadixTrieData;
 import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import de.skuld.util.ConfigurationHelper;
 import java.io.IOException;
-import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -40,8 +35,10 @@ public class DiskBasedRadixTrie extends
 
   /**
    * Creates a new DiskBasedRadixTrie at the specified location.
+   *
    * @param rootPath path that will be used as root of the trie
-   * @param date date (might be null) for which to generate seeds. If null, will use the current system time.
+   * @param date     date (might be null) for which to generate seeds. If null, will use the current
+   *                 system time.
    */
   public DiskBasedRadixTrie(Path rootPath, @Nullable Date date) {
     this.rootPath = rootPath;
@@ -56,26 +53,28 @@ public class DiskBasedRadixTrie extends
       fillSeedMap(seeds);
       serializeSeedMap();
     }
-    // TODO CONFIG
-    if (true) {
+
+    if (ConfigurationHelper.getConfig().getBoolean("radix.disk_based.memory_cache.enabled")) {
       this.memoryCache = new HashMap<>();
     }
   }
 
   @Override
   public @NotNull DiskBasedRadixTrieNode getDummyNode() {
-    return new DiskBasedRadixTrieNode(true,null, rootPath, this);
+    return new DiskBasedRadixTrieNode(true, null, rootPath, this);
   }
 
   @Override
-  public @NotNull PathRadixTrieEdge createEdge(String[] label, @NotNull DiskBasedRadixTrieNode parentNode) {
+  public @NotNull PathRadixTrieEdge createEdge(String[] label,
+      @NotNull DiskBasedRadixTrieNode parentNode) {
     Deque<PathRadixTrieEdge> path = parentNode.getEdgesFromRoot();
     Path newPath = parentNode.getPath().resolve(Arrays.stream(label).reduce(String::concat).get());
 
     //noinspection ResultOfMethodCallIgnored
     newPath.toFile().mkdir();
 
-    PathRadixTrieEdge edge = new PathRadixTrieEdge(label, new DiskBasedRadixTrieNode(false,null, newPath, this), newPath);
+    PathRadixTrieEdge edge = new PathRadixTrieEdge(label,
+        new DiskBasedRadixTrieNode(false, null, newPath, this), newPath);
     edge.setParent(parentNode);
     return edge;
   }
@@ -84,12 +83,15 @@ public class DiskBasedRadixTrie extends
   public @NotNull DiskBasedRadixTrieNode createNode(DiskBasedRandomnessRadixTrieData data,
       PathRadixTrieEdge parentEdge) {
     if (data == null) {
-      String label = Arrays.stream(parentEdge.getLabel()).reduce((a,b) -> a + "" + b).orElseGet(String::new);
-      Path newPath = parentEdge.getParent().getPath().resolve(label + rootPath.getFileSystem().getSeparator());
+      String label = Arrays.stream(parentEdge.getLabel()).reduce((a, b) -> a + "" + b)
+          .orElseGet(String::new);
+      Path newPath = parentEdge.getParent().getPath()
+          .resolve(label + rootPath.getFileSystem().getSeparator());
 
-      return new DiskBasedRadixTrieNode(false,null, newPath, this);
+      return new DiskBasedRadixTrieNode(false, null, newPath, this);
     } else {
-      DiskBasedRadixTrieNode node = new DiskBasedRadixTrieNode(false, data, parentEdge.getPath(), this);
+      DiskBasedRadixTrieNode node = new DiskBasedRadixTrieNode(false, data, parentEdge.getPath(),
+          this);
       node.serialize();
       return node;
     }
@@ -118,22 +120,22 @@ public class DiskBasedRadixTrie extends
   @Override
   public boolean contains(byte @NotNull [] indexingData) {
     Optional<DiskBasedRadixTrieNode> node = super.getNode(indexingData);
-    //System.out.println(node + " is the node");
     return node.filter(
         diskBasedRadixTrieNode -> (diskBasedRadixTrieNode
             .getData()).getDataPoint(indexingData).isPresent()).isPresent();
   }
 
   private boolean existsOnDisk() {
-    return this.rootPath.resolve("seeds.bin").toFile().exists();
+    return this.rootPath
+        .resolve(ConfigurationHelper.getConfig().getString("radix.seed_file.file_name")).toFile()
+        .exists();
   }
 
   private void deserializeSeedMap() {
-    //System.out.println("deserializing seed map");
-    // TODO config
-    Path seedMapPath = this.rootPath.resolve("seeds.bin");
+    Path seedMapPath = this.rootPath
+        .resolve(ConfigurationHelper.getConfig().getString("radix.seed_file.file_name"));
 
-    try(FileChannel fileChannel = (FileChannel) Files.newByteChannel(seedMapPath, EnumSet.of(
+    try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(seedMapPath, EnumSet.of(
         StandardOpenOption.READ))) {
       MappedByteBuffer mappedByteBuffer = fileChannel.map(MapMode.READ_ONLY, 0, fileChannel.size());
       long amountOfSeeds = fileChannel.size() / Long.BYTES;
@@ -144,25 +146,21 @@ public class DiskBasedRadixTrie extends
     } catch (IOException e) {
       e.printStackTrace();
     }
-    //System.out.println("420 is " + seedMap.get(420));
   }
 
   private void fillSeedMap(long[] seeds) {
-    for(int i = 0; i < seeds.length; i++) {
+    for (int i = 0; i < seeds.length; i++) {
       this.seedMap.put(i, seeds[i]);
     }
   }
 
   private void serializeSeedMap() {
-    // TODO config
-    //System.out.println("serializing seed map");
-    Path seedMapPath = this.rootPath.resolve("seeds.bin");
-
+    Path seedMapPath = this.rootPath
+        .resolve(ConfigurationHelper.getConfig().getString("radix.seed_file.file_name"));
     long space = (long) this.seedMap.keySet().size() * Long.BYTES;
-
     int i = 0;
 
-    try(FileChannel fileChannel = (FileChannel) Files.newByteChannel(seedMapPath, EnumSet.of(
+    try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(seedMapPath, EnumSet.of(
         StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE))) {
       MappedByteBuffer mappedByteBuffer = fileChannel.map(MapMode.READ_WRITE, 0, space);
 
@@ -174,8 +172,6 @@ public class DiskBasedRadixTrie extends
     } catch (IOException e) {
       e.printStackTrace();
     }
-
-    //System.out.println("420 is " + seedMap.get(420));
   }
 
   private boolean usesCache() {
@@ -186,21 +182,20 @@ public class DiskBasedRadixTrie extends
   public boolean add(@NotNull DiskBasedRadixTrieNode parent,
       @NotNull DiskBasedRandomnessRadixTrieData data, byte @NotNull [] indexingData) {
     if (parent == root && usesCache()) {
-
-      // TODO config length of cache key
-
       Pair<DiskBasedRandomnessRadixTrieData, byte[]> pair = new Pair<>(data, indexingData);
 
-      ByteBuffer buffer = ByteBuffer.wrap(Arrays.copyOfRange(indexingData, 0, 3));
-      //data.getDataPoints().forEach(dp -> dp.setRemainingBytes(Arrays.copyOfRange(indexingData, 3, indexingData.length)));
+      ByteBuffer buffer = ByteBuffer
+          .wrap(Arrays.copyOfRange(indexingData, 0, ConfigurationHelper.getConfig()
+              .getInt("radix.disk_based.memory_cache.key_length")));
+
       this.memoryCache.merge(buffer, pair, (old, latest) -> {
         old.getFirst().mergeDataRaw(latest.getFirst());
         return old;
       });
       cacheSize++;
 
-      // TODO config ~ roughly 2 GB
-      if (cacheSize >= 56000000) {
+      if (cacheSize >= ConfigurationHelper.getConfig()
+          .getInt("radix.disk_based.memory_cache.elements")) {
         flushCache();
       }
 

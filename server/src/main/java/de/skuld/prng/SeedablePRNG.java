@@ -1,7 +1,5 @@
 package de.skuld.prng;
 
-import org.jetbrains.annotations.Nullable;
-
 public interface SeedablePRNG extends PRNG {
 
   /**

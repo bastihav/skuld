@@ -27,9 +27,9 @@ public interface RadixTrieEdge<D extends AbstractRadixTrieData, N extends RadixT
 
   N getChild();
 
-  N getParent();
-
   void setChild(N child);
+
+  N getParent();
 
   void setParent(N parent);
 

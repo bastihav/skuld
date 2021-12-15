@@ -4,7 +4,8 @@ import de.skuld.radix.AbstractRadixTrieEdge;
 import de.skuld.radix.RadixTrieEdge;
 import de.skuld.radix.data.RandomnessRadixTrieData;
 
-public class StringRadixTrieEdge extends AbstractRadixTrieEdge<RandomnessRadixTrieData, MemoryRadixTrieNode> implements
+public class StringRadixTrieEdge extends
+    AbstractRadixTrieEdge<RandomnessRadixTrieData, MemoryRadixTrieNode> implements
     RadixTrieEdge<RandomnessRadixTrieData, MemoryRadixTrieNode> {
 
   StringRadixTrieEdge(String[] label) {

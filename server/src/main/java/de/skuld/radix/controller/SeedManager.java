@@ -1,6 +1,5 @@
 package de.skuld.radix.controller;
 
-import de.skuld.prng.JavaRandom;
 import de.skuld.prng.PRNG;
 import java.util.Arrays;
 import java.util.Collection;
@@ -10,6 +9,7 @@ import java.util.Set;
 import java.util.stream.LongStream;
 
 public class SeedManager {
+
   // 60 seconds * 60 minutes * 24 hours * 2 days
   private static final int UNIX_TIME_TO_GENERATE = 172800;
   private final RNGManager rngManager;

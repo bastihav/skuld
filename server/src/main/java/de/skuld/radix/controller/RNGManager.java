@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Set;
 
 public class RNGManager {
+
   public Collection<Class<? extends PRNG>> getPRNGs() {
     // TODO fill
     return Set.of(JavaRandom.class);

@@ -7,10 +7,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Generic radix trie interface
- *
- * Example:
- *  Leaves store meta-information on randomness, i.e. seed and algorithm
- *  Their position is based on the randomness, which is a byte array
+ * <p>
+ * Example: Leaves store meta-information on randomness, i.e. seed and algorithm Their position is
+ * based on the randomness, which is a byte array
  *
  * @param <D> Data that will be stored in leaves
  * @param <P> type of data points in D
@@ -21,9 +20,8 @@ import org.jetbrains.annotations.Nullable;
 public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extends RadixTrieNode<D, E>, E extends RadixTrieEdge<D, N>> {
 
   /**
-   * Method that returns an instance of a dummy node.
-   * The dummy node is used as non-leaves and may have null-data.
-   * Depending on the implementation, this node may be a singleton.
+   * Method that returns an instance of a dummy node. The dummy node is used as non-leaves and may
+   * have null-data. Depending on the implementation, this node may be a singleton.
    *
    * @return dummy node instance
    */
@@ -41,7 +39,7 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extend
   /**
    * Method that inserts data in the trie. Position is based on indexingData.
    *
-   * @param data leaf data
+   * @param data         leaf data
    * @param indexingData indexing data
    * @return true if the data was successfully added
    */
@@ -50,8 +48,8 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extend
   /**
    * Method that inserts data in the sub-trie under a node. Position is based on indexingData.
    *
-   * @param parent parent node
-   * @param data leaf data
+   * @param parent       parent node
+   * @param data         leaf data
    * @param indexingData indexing data
    * @return true if the data was successfully added
    */
@@ -74,9 +72,10 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extend
   Optional<N> getNode(@NotNull I indexingData);
 
   /**
-   * Method that creates a new edge for the radix trie. The edge should not yet be connected or inserted in the trie.
+   * Method that creates a new edge for the radix trie. The edge should not yet be connected or
+   * inserted in the trie.
    *
-   * @param label edge label
+   * @param label      edge label
    * @param parentNode parent node
    * @return new edge instance
    */
@@ -86,7 +85,7 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extend
   /**
    * Method that creates a new node for the trie. The edge should not yet be inserted in the trie.
    *
-   * @param data node data. May be null if this is not a leaf
+   * @param data       node data. May be null if this is not a leaf
    * @param parentEdge parent edge. May be null if this is the root element
    * @return new node instance
    */
@@ -94,7 +93,9 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extend
   N createNode(@Nullable D data, @Nullable E parentEdge);
 
   /**
-   * Method that returns a string array of labels for the indexing data. Overriding classes should implement this by delegating it to the implementation of D.
+   * Method that returns a string array of labels for the indexing data. Overriding classes should
+   * implement this by delegating it to the implementation of D.
+   *
    * @param indexingData data to index by
    * @return labels
    */
@@ -102,6 +103,7 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extend
 
   /**
    * Moves a subtree from src (including src) under dest node.
+   *
    * @param src
    * @param edge edge that will go from dest node to moved src node
    * @param dest
@@ -111,6 +113,7 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extend
 
   /**
    * Returns the seed map of this radix trie
+   *
    * @return seed map
    */
   BiMap<Integer, Long> getSeedMap();

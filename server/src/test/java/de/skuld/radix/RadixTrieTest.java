@@ -7,7 +7,6 @@ import de.skuld.prng.ImplementedPRNGs;
 import de.skuld.radix.data.RandomnessRadixTrieData;
 import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
 import de.skuld.radix.memory.MemoryRadixTrie;
-import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 
 public class RadixTrieTest {
@@ -21,8 +20,9 @@ public class RadixTrieTest {
       randomness[i] = 0;
     }
 
-    RandomnessRadixTrieData data = new RandomnessRadixTrieData(new RandomnessRadixTrieDataPoint(randomness, ImplementedPRNGs.JAVA_RANDOM, 0,
-        42));
+    RandomnessRadixTrieData data = new RandomnessRadixTrieData(
+        new RandomnessRadixTrieDataPoint(randomness, ImplementedPRNGs.JAVA_RANDOM, 0,
+            42));
 
     byte[] randomness2 = new byte[32];
     for (int i = 0; i < 16; i++) {
@@ -32,11 +32,13 @@ public class RadixTrieTest {
       randomness2[i] = 5;
     }
 
-    RandomnessRadixTrieData data2 = new RandomnessRadixTrieData(new RandomnessRadixTrieDataPoint(randomness2, ImplementedPRNGs.JAVA_RANDOM, 1,
-        421));
+    RandomnessRadixTrieData data2 = new RandomnessRadixTrieData(
+        new RandomnessRadixTrieDataPoint(randomness2, ImplementedPRNGs.JAVA_RANDOM, 1,
+            421));
 
-    RandomnessRadixTrieData data3 = new RandomnessRadixTrieData(new RandomnessRadixTrieDataPoint(randomness2, ImplementedPRNGs.JAVA_RANDOM, 2,
-        422));
+    RandomnessRadixTrieData data3 = new RandomnessRadixTrieData(
+        new RandomnessRadixTrieDataPoint(randomness2, ImplementedPRNGs.JAVA_RANDOM, 2,
+            422));
 
     trie.add(data, randomness);
 
@@ -53,7 +55,9 @@ public class RadixTrieTest {
     assertTrue(trie.contains(randomness2));
 
     assertEquals(1, trie.getRoot().getOutgoingEdges().size());
-    assertEquals(2, trie.getRoot().getOutgoingEdges().stream().findFirst().get().getChild().getOutgoingEdges().size());
+    assertEquals(2,
+        trie.getRoot().getOutgoingEdges().stream().findFirst().get().getChild().getOutgoingEdges()
+            .size());
 
     RandomnessRadixTrieData queriedData = trie.getNode(randomness2).get().getData();
 

@@ -5,16 +5,49 @@ import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedBytes;
 import de.skuld.prng.ImplementedPRNGs;
 import de.skuld.radix.AbstractRadixTrieDataPoint;
-import de.skuld.radix.disk.DiskBasedRadixTrie;
+import de.skuld.util.ConfigurationHelper;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
-import org.jetbrains.annotations.NotNull;
 
 public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byte[]> {
 
   private final ImplementedPRNGs rng;
   private final int seedIndex;
   private final int byteIndexInRandomness;
+
+  public RandomnessRadixTrieDataPoint(byte[] remainingBytes, ImplementedPRNGs rng, int seedIndex,
+      int byteIndexInRandomness) {
+    this.remainingIndexingData = Arrays.copyOf(remainingBytes, remainingBytes.length);
+    this.rng = rng;
+    this.seedIndex = seedIndex;
+    this.byteIndexInRandomness = byteIndexInRandomness;
+  }
+
+  public RandomnessRadixTrieDataPoint(byte[] serializedData) {
+    int remainingSize = ConfigurationHelper.getConfig()
+        .getInt("radix.partition.serialized.remaining");
+    int rngSize = ConfigurationHelper.getConfig()
+        .getInt("radix.partition.serialized.rng_index");
+    int seedIndexSize = ConfigurationHelper.getConfig()
+        .getInt("radix.partition.serialized.byte_index");
+    int byteIndexSize = ConfigurationHelper.getConfig()
+        .getInt("radix.partition.serialized.seed_index");
+
+    int currentIndex = 0;
+    this.remainingIndexingData = Arrays
+        .copyOfRange(serializedData, currentIndex, currentIndex + remainingSize);
+    currentIndex += remainingSize;
+
+    this.rng = ImplementedPRNGs.values()[serializedData[currentIndex]];
+    currentIndex++;
+
+    this.seedIndex = Ints.fromByteArray(
+        Arrays.copyOfRange(serializedData, currentIndex, currentIndex + seedIndexSize));
+    currentIndex += seedIndexSize;
+
+    this.byteIndexInRandomness = Ints.fromByteArray(
+        Arrays.copyOfRange(serializedData, currentIndex, currentIndex + byteIndexSize));
+    ;
+  }
 
   public ImplementedPRNGs getRng() {
     return rng;
@@ -26,21 +59,6 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
 
   public int getByteIndexInRandomness() {
     return byteIndexInRandomness;
-  }
-
-  public RandomnessRadixTrieDataPoint(byte[] remainingBytes, ImplementedPRNGs rng, int seedIndex,
-      int byteIndexInRandomness) {
-    this.remainingIndexingData = Arrays.copyOf(remainingBytes, remainingBytes.length);
-    this.rng = rng;
-    this.seedIndex = seedIndex;
-    this.byteIndexInRandomness = byteIndexInRandomness;
-  }
-
-  public RandomnessRadixTrieDataPoint(byte[] serializedData) {
-    this.remainingIndexingData = Arrays.copyOfRange(serializedData, 0, 29);
-    this.rng = ImplementedPRNGs.values()[serializedData[29]];
-    this.seedIndex = Ints.fromByteArray(Arrays.copyOfRange(serializedData, 30, 34));
-    this.byteIndexInRandomness = Ints.fromByteArray(Arrays.copyOfRange(serializedData, 34, 38));;
   }
 
   @Override
@@ -55,7 +73,8 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
 
   @Override
   public void removePrefixFromRemainingIndexingData(int amount) {
-    this.remainingIndexingData = Arrays.copyOfRange(remainingIndexingData, amount, remainingIndexingData.length);
+    this.remainingIndexingData = Arrays
+        .copyOfRange(remainingIndexingData, amount, remainingIndexingData.length);
   }
 
   @Override
@@ -79,12 +98,12 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
   public void serialize(byte[] serializedData, int index) {
     int currentIndex = index;
 
-    //System.out.println("serialized " + Arrays.toString(remainingIndexingData));
-
-    System.arraycopy(remainingIndexingData, 0, serializedData, currentIndex, remainingIndexingData.length);
+    System.arraycopy(remainingIndexingData, 0, serializedData, currentIndex,
+        remainingIndexingData.length);
     currentIndex += remainingIndexingData.length;
 
-    System.arraycopy(new byte[]{((Integer) rng.ordinal()).byteValue()}, 0, serializedData, currentIndex, 1);
+    System.arraycopy(new byte[]{((Integer) rng.ordinal()).byteValue()}, 0, serializedData,
+        currentIndex, 1);
     currentIndex++;
 
     System.arraycopy(Ints.toByteArray(seedIndex), 0, serializedData, currentIndex, 4);

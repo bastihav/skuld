@@ -3,8 +3,8 @@ package de.skuld.radix.disk;
 import de.skuld.radix.AbstractRadixTrieNode;
 import de.skuld.radix.RadixTrieNode;
 import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
+import de.skuld.util.ConfigurationHelper;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -20,12 +20,15 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class DiskBasedRadixTrieNode extends AbstractRadixTrieNode<DiskBasedRandomnessRadixTrieData, byte[], RandomnessRadixTrieDataPoint, PathRadixTrieEdge> implements RadixTrieNode<DiskBasedRandomnessRadixTrieData, PathRadixTrieEdge> {
+public class DiskBasedRadixTrieNode extends
+    AbstractRadixTrieNode<DiskBasedRandomnessRadixTrieData, byte[], RandomnessRadixTrieDataPoint, PathRadixTrieEdge> implements
+    RadixTrieNode<DiskBasedRandomnessRadixTrieData, PathRadixTrieEdge> {
 
   private final Path p;
   private final DiskBasedRadixTrie trie;
 
-  public DiskBasedRadixTrieNode(boolean isRoot, DiskBasedRandomnessRadixTrieData data, Path path, DiskBasedRadixTrie trie) {
+  public DiskBasedRadixTrieNode(boolean isRoot, DiskBasedRandomnessRadixTrieData data, Path path,
+      DiskBasedRadixTrie trie) {
     super(isRoot, trie);
     this.data = data;
     this.p = path;
@@ -35,10 +38,10 @@ public class DiskBasedRadixTrieNode extends AbstractRadixTrieNode<DiskBasedRando
   @Override
   public DiskBasedRandomnessRadixTrieData getData() {
     if (!this.isLeafNode()) {
-      System.out.println("not a leaf node!");
       return null;
     }
-    if (this.data == null && this.p.endsWith("table.bin")) {
+    if (this.data == null && this.p
+        .endsWith(ConfigurationHelper.getConfig().getString("radix.leaf.file_name"))) {
       this.data = new DiskBasedRandomnessRadixTrieData(p);
     }
     return this.data;
@@ -50,14 +53,12 @@ public class DiskBasedRadixTrieNode extends AbstractRadixTrieNode<DiskBasedRando
 
   @Override
   public boolean isLeafNode() {
-    //System.out.println("P -> " + this.p);
-    //System.out.println(this.p.endsWith("table.bin"));
-    return this.p.endsWith("table.bin");
+    return this.p.endsWith(ConfigurationHelper.getConfig().getString("radix.leaf.file_name"));
   }
 
   @Override
   public boolean hasData() {
-    return this.p.endsWith("table.bin");
+    return this.p.endsWith(ConfigurationHelper.getConfig().getString("radix.leaf.file_name"));
   }
 
   @Override
@@ -71,50 +72,26 @@ public class DiskBasedRadixTrieNode extends AbstractRadixTrieNode<DiskBasedRando
 
   @Override
   public String serialize() {
-    //System.out.println("Serializing!");
-    //TODO config
-    File file = p.resolve("table.bin").toFile();
-
-    boolean existed = file.exists();
-
-    try {
-      file.createNewFile();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+    File file = p.resolve(ConfigurationHelper.getConfig().getString("radix.leaf.file_name"))
+        .toFile();
 
     try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(), EnumSet.of(
-        StandardOpenOption.READ, StandardOpenOption.WRITE))) {
+        StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE))) {
       long readSizeInBytes = fileChannel.size();
       if (readSizeInBytes != 0) {
         System.out.println("File Should be empty");
       }
-      //System.out.println("serializing data");
       byte[] serializedData = this.data.serialize(trie);
-      //System.out.println("serialized data");
+
       long writeSizeInBytes = readSizeInBytes + serializedData.length;
       MappedByteBuffer mappedByteBuffer = fileChannel.map(MapMode.READ_WRITE, 0, writeSizeInBytes);
       mappedByteBuffer.position(0);
-      //System.out.println("allocated mem");
       mappedByteBuffer.put(serializedData);
 
     } catch (IOException e) {
       e.printStackTrace();
     }
 
-    /*try (FileOutputStream fileOutputStream = new FileOutputStream(file, true)) {
-      *//*for (RandomnessRadixTrieDataPoint randomnessRadixTrieDataPoint : data.getDataPoints()) {
-        ImplementedPRNGs rng = randomnessRadixTrieDataPoint.getRng();
-        fileOutputStream.write(rng.ordinal());
-      }*//*
-      fileOutputStream.write();
-      //fileOutputStream.write(new byte[]{0x00,0x01,0x1F,0x6F});
-      fileOutputStream.flush();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }*/
-
-    //throw new NotImplementedException("serializeee");
     return "";
   }
 
@@ -127,9 +104,11 @@ public class DiskBasedRadixTrieNode extends AbstractRadixTrieNode<DiskBasedRando
   public Collection<PathRadixTrieEdge> getOutgoingEdges() {
     return Arrays.stream(p.toFile().list()).map(pathName -> {
 
-      if (pathName.endsWith("bin")) {
+      if (pathName.endsWith(ConfigurationHelper.getConfig().getString("radix.leaf.file_name"))) {
         //System.out.println("this is the path name " + pathName);
-        PathRadixTrieEdge edge = new PathRadixTrieEdge(new String[0], new DiskBasedRadixTrieNode(false,null, p.resolve(pathName), trie), p.resolve(pathName));
+        PathRadixTrieEdge edge = new PathRadixTrieEdge(new String[0],
+            new DiskBasedRadixTrieNode(false, null, p.resolve(pathName), trie),
+            p.resolve(pathName));
         edge.setSummary(false);
         edge.setAmountOfSummarizedElements(0);
         edge.setParent(this);
@@ -138,7 +117,8 @@ public class DiskBasedRadixTrieNode extends AbstractRadixTrieNode<DiskBasedRando
 
       // split after two characters
       String[] labels = pathName.split("(?<=\\G..)");
-      PathRadixTrieEdge edge = new PathRadixTrieEdge(labels, new DiskBasedRadixTrieNode(false,null, p.resolve(pathName), trie), p.resolve(pathName));
+      PathRadixTrieEdge edge = new PathRadixTrieEdge(labels,
+          new DiskBasedRadixTrieNode(false, null, p.resolve(pathName), trie), p.resolve(pathName));
       edge.setSummary(true);
       edge.setAmountOfSummarizedElements(labels.length);
       edge.setParent(this);
@@ -148,13 +128,11 @@ public class DiskBasedRadixTrieNode extends AbstractRadixTrieNode<DiskBasedRando
 
   @Override
   public Optional<PathRadixTrieEdge> getOutgoingEdge(String label) {
-    //System.out.println("looking for " + label);
-    //System.out.println(Arrays.toString(p.toFile().listFiles()));
-    //System.out.println(p.resolve(label).toFile());
     if (!p.resolve(label).toFile().exists()) {
       return Optional.empty();
     } else {
-      return Optional.of(new PathRadixTrieEdge(new String[]{label}, new DiskBasedRadixTrieNode(false,null, p.resolve(label), trie), p.resolve(label)));
+      return Optional.of(new PathRadixTrieEdge(new String[]{label},
+          new DiskBasedRadixTrieNode(false, null, p.resolve(label), trie), p.resolve(label)));
     }
   }
 
@@ -169,35 +147,40 @@ public class DiskBasedRadixTrieNode extends AbstractRadixTrieNode<DiskBasedRando
   }
 
   @Override
-  public void setParentEdge(PathRadixTrieEdge parentEdge) {
-    this.parentEdge = parentEdge;
-  }
-
-  @Override
   public PathRadixTrieEdge getParentEdge() {
-    // TODO
     if (isRoot) {
       return null;
     } else {
-      String[] fragments = this.p.toString().split(Pattern.quote(this.p.getFileSystem().getSeparator()));
+      String[] fragments = this.p.toString()
+          .split(Pattern.quote(this.p.getFileSystem().getSeparator()));
 
-      String[] relevantFragments = this.p.toString().substring(this.p.toString().lastIndexOf("skuld")).replace("table.bin", "").split(
-          Pattern.quote(this.p.getFileSystem().getSeparator()));
+      // TODO skuld config
+      String[] relevantFragments = this.p.toString()
+          .substring(this.p.toString().lastIndexOf("skuld"))
+          .replace(ConfigurationHelper.getConfig().getString("radix.leaf.file_name"), "").split(
+              Pattern.quote(this.p.getFileSystem().getSeparator()));
 
       // ignore first fragment as it is skuld/
       String[] labels = relevantFragments[relevantFragments.length - 1].split("(?<=\\G..)");
 
       PathRadixTrieEdge edge = new PathRadixTrieEdge(labels, this, p);
 
-      String pathString = Arrays.stream(relevantFragments).limit(relevantFragments.length-1).reduce((a,b) -> a + this.p.getFileSystem().getSeparator() + b).get();
+      String pathString = Arrays.stream(relevantFragments).limit(relevantFragments.length - 1)
+          .reduce((a, b) -> a + this.p.getFileSystem().getSeparator() + b).get();
 
-      DiskBasedRadixTrieNode parentNode = new DiskBasedRadixTrieNode(relevantFragments.length == 2, null, Paths.get(pathString), trie);
+      DiskBasedRadixTrieNode parentNode = new DiskBasedRadixTrieNode(relevantFragments.length == 2,
+          null, Paths.get(pathString), trie);
       edge.setParent(parentNode);
 
       edge.setSummary(fragments.length > 2);
       edge.setAmountOfSummarizedElements(fragments.length - 2);
       return edge;
     }
+  }
+
+  @Override
+  public void setParentEdge(PathRadixTrieEdge parentEdge) {
+    this.parentEdge = parentEdge;
   }
 
 }
