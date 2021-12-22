@@ -19,6 +19,11 @@ public class MemoryRadixTrie extends
   }
 
   @Override
+  public void delete() {
+
+  }
+
+  @Override
   public @NotNull StringRadixTrieEdge createEdge(String[] label,
       @NotNull MemoryRadixTrieNode parentNode) {
     StringRadixTrieEdge edge = new StringRadixTrieEdge(label);

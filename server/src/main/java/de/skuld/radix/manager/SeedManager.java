@@ -1,4 +1,4 @@
-package de.skuld.radix.controller;
+package de.skuld.radix.manager;
 
 import de.skuld.prng.PRNG;
 import java.util.Arrays;

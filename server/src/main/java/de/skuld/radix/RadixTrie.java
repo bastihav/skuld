@@ -2,6 +2,7 @@ package de.skuld.radix;
 
 import com.google.common.collect.BiMap;
 import java.util.Optional;
+import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,4 +118,15 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extend
    * @return seed map
    */
   BiMap<Integer, Long> getSeedMap();
+
+  /**
+   * Deletes the trie
+   */
+  void delete();
+
+  /**
+   * Gets the meta data of this trie
+   * @return meta data
+   */
+  RadixMetaData getMetaData();
 }

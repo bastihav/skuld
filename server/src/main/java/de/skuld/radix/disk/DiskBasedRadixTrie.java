@@ -1,8 +1,8 @@
 package de.skuld.radix.disk;
 
 import de.skuld.radix.AbstractRadixTrie;
-import de.skuld.radix.controller.RNGManager;
-import de.skuld.radix.controller.SeedManager;
+import de.skuld.radix.manager.RNGManager;
+import de.skuld.radix.manager.SeedManager;
 import de.skuld.radix.data.RandomnessRadixTrieData;
 import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
 import de.skuld.util.ConfigurationHelper;
@@ -41,6 +41,7 @@ public class DiskBasedRadixTrie extends
    *                 system time.
    */
   public DiskBasedRadixTrie(Path rootPath, @Nullable Date date) {
+    super(date);
     this.rootPath = rootPath;
     this.root = getDummyNode();
 
@@ -115,6 +116,11 @@ public class DiskBasedRadixTrie extends
     }
 
     return super.moveSubtree(src, edge, dest);
+  }
+
+  @Override
+  public void delete() {
+    // TODO
   }
 
   @Override

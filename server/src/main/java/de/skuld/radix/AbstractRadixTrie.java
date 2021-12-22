@@ -6,7 +6,9 @@ import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
 import de.skuld.util.ConfigurationHelper;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Optional;
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +19,31 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
   private static final Logger LOGGER = LogManager.getLogger();
   protected final BiMap<Integer, Long> seedMap = HashBiMap.create();
   protected N root = getDummyNode();
+  protected RadixMetaData metaData;
+
+  public AbstractRadixTrie() {
+    this.metaData = new RadixMetaData(UUID.randomUUID(), new Date(), RadixTrieStatus.CREATED);
+  }
+
+  public AbstractRadixTrie(Date date) {
+    this();
+    this.metaData.setDate(date);
+  }
+
+  public AbstractRadixTrie(RadixTrieStatus status) {
+    this();
+    this.metaData.setStatus(status);
+  }
+
+  public AbstractRadixTrie(Date date, RadixTrieStatus status) {
+    this(date);
+    this.metaData.setStatus(status);
+  }
+
+  @Override
+  public RadixMetaData getMetaData() {
+    return metaData;
+  }
 
   public BiMap<Integer, Long> getSeedMap() {
     return seedMap;
