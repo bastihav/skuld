@@ -7,7 +7,7 @@ public class JavaRandom implements SeedablePRNG {
 
   private final Random r;
 
-  JavaRandom() {
+  private JavaRandom() {
     this.r = new Random();
   }
 
