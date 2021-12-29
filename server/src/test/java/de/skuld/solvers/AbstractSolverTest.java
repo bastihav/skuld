@@ -15,13 +15,11 @@ public abstract class AbstractSolverTest {
         Solver solver = getSolver();
         for (long seed : getSeeds()) {
             long[] possibleSeeds = solver.solve(getSolverInput(seed));
-            System.out.println(Arrays.toString(possibleSeeds));
             Assertions.assertTrue(Arrays.stream(possibleSeeds).anyMatch(element -> element == seed));
-            System.out.println("Found seed " + seed);
         }
     }
 
     public long[] getSeeds() {
-        return new long[]{0, 1, 2, 3, 42, 1337, -500};
+        return new long[]{0, 1, 2, 3, 42, 1337};
     }
 }
