@@ -46,7 +46,7 @@ public class MersenneTwisterPython implements SeedablePRNG {
     if (Long.numberOfLeadingZeros(seed) >= 32) {
       intArray = new int[]{(int) seed};
     } else {
-      intArray = new int[]{(int) seed, (int) (seed >> 32)};
+      intArray = new int[]{(int) seed, (int) (seed >>> 32)};
     }
     System.out.println("seed as array " + Arrays.toString(intArray));
     twister.setSeed(intArray);
