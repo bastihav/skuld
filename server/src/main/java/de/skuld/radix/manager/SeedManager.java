@@ -28,9 +28,10 @@ public class SeedManager {
     long[] defaultSeeds = getDefaultSeeds();
     long[] badSeeds = badSeeds();
 
-    return LongStream
+/*    return LongStream
         .concat(LongStream.concat(Arrays.stream(unixSeeds), Arrays.stream(defaultSeeds)),
-            Arrays.stream(badSeeds)).distinct().toArray();
+            Arrays.stream(badSeeds)).distinct().toArray();*/
+    return badSeeds;
   }
 
   /**
@@ -39,7 +40,7 @@ public class SeedManager {
    * @return
    */
   private long[] badSeeds() {
-    return new long[]{0};
+    return new long[]{0, 1};
   }
 
   /**
@@ -68,8 +69,8 @@ public class SeedManager {
 
     prngs.forEach(prng -> {
       try {
-        seeds.add(prng.getConstructor().newInstance().usesUnixTimeAsDefault() ? 0
-            : prng.getConstructor().newInstance().getDefaultSeed());
+        seeds.add(prng.getConstructor(long.class).newInstance(0).usesUnixTimeAsDefault() ? 0
+            : prng.getConstructor(long.class).newInstance(0).getDefaultSeed());
       } catch (Exception e) {
         e.printStackTrace();
       }

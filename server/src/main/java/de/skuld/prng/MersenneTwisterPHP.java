@@ -18,6 +18,11 @@ public class MersenneTwisterPHP extends MersenneTwister {
   }
 
   @Override
+  public ImplementedPRNGs getPRNG() {
+    return ImplementedPRNGs.MERSENNE_TWISTER_PHP;
+  }
+
+  @Override
   public void seed(long seed) {
 
   }

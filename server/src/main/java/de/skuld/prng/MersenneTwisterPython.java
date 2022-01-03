@@ -34,6 +34,11 @@ public class MersenneTwisterPython implements SeedablePRNG {
   }
 
   @Override
+  public ImplementedPRNGs getPRNG() {
+    return ImplementedPRNGs.MERSENNE_TWISTER_PYTHON;
+  }
+
+  @Override
   public void seed(long seed) {
     System.out.println("original seed: " + seed);
 /*    if (seed < 0) {

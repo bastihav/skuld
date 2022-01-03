@@ -36,6 +36,11 @@ public class Xorshift128Plus implements SeedablePRNG {
   }
 
   @Override
+  public ImplementedPRNGs getPRNG() {
+    return ImplementedPRNGs.XORSHIFT128PLUS;
+  }
+
+  @Override
   public void seed(long seed) {
     this.initialSeed = seed;
     System.out.println("seed " + seed);

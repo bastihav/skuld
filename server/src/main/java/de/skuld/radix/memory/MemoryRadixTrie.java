@@ -24,6 +24,16 @@ public class MemoryRadixTrie extends
   }
 
   @Override
+  public void serializeMetaData() {
+    // TODO
+  }
+
+  @Override
+  public void generate() {
+    // TODO
+  }
+
+  @Override
   public @NotNull StringRadixTrieEdge createEdge(String[] label,
       @NotNull MemoryRadixTrieNode parentNode) {
     StringRadixTrieEdge edge = new StringRadixTrieEdge(label);

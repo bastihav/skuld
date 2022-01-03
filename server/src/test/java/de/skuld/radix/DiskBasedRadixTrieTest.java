@@ -136,7 +136,7 @@ public class DiskBasedRadixTrieTest {
       }
 
     }
-    trie.flushCache();
+    trie.flushMemoryCache();
     long pong = System.nanoTime();
 
     System.out.println(pong - ping);
@@ -186,7 +186,7 @@ public class DiskBasedRadixTrieTest {
       }
 
     }
-    trie.flushCache();
+    trie.flushMemoryCache();
     long pong = System.nanoTime();
 
     System.out.println(pong - ping);
@@ -240,7 +240,7 @@ public class DiskBasedRadixTrieTest {
         System.out.println(i);
       }
     }
-    trie.flushCache();
+    trie.flushMemoryCache();
     long pong = System.nanoTime();
 
     System.out.println("write: " + (pong - ping));

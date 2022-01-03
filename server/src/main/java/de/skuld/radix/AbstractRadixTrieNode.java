@@ -26,9 +26,7 @@ public abstract class AbstractRadixTrieNode<D extends AbstractRadixTrieData<I, P
 
   @Override
   public boolean mergeNodes(D otherData) {
-    //System.out.println("Calling abstract merge nodes");
     if (!this.hasData()) {
-      //System.out.println("this data is empty!");
       this.data = otherData;
       return true;
     }
@@ -66,7 +64,6 @@ public abstract class AbstractRadixTrieNode<D extends AbstractRadixTrieData<I, P
     while (currentNode != null && currentNode.getParentEdge() != null) {
       path.push(currentNode.getParentEdge());
       currentNode = currentNode.getParentEdge().getParent();
-      //System.out.println("current node: " + currentNode);
     }
 
     return path;

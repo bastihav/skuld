@@ -228,9 +228,6 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
 
     String[] pathFromRoot = currentNode.getPathFromRoot();
 
-    //System.out.println("I went all the way to " + Arrays.toString(pathFromRoot));
-    //System.out.println("Looking for " + Arrays.toString(edgeLabels));
-
     if (!currentNode.isLeafNode()) {
       return Optional.empty();
     }

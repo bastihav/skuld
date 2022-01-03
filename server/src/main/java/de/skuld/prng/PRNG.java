@@ -22,4 +22,6 @@ public interface PRNG {
    * @return whether the original implementation uses unix time as default seed
    */
   boolean usesUnixTimeAsDefault();
+
+  ImplementedPRNGs getPRNG();
 }

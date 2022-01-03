@@ -22,23 +22,14 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
     this.byteIndexInRandomness = byteIndexInRandomness;
   }
 
-  public RandomnessRadixTrieDataPoint(byte[] serializedData) {
-    int remainingSize = ConfigurationHelper.getConfig()
-        .getInt("radix.partition.serialized.remaining");
-    int rngSize = ConfigurationHelper.getConfig()
-        .getInt("radix.partition.serialized.rng_index");
-    int seedIndexSize = ConfigurationHelper.getConfig()
-        .getInt("radix.partition.serialized.byte_index");
-    int byteIndexSize = ConfigurationHelper.getConfig()
-        .getInt("radix.partition.serialized.seed_index");
-
+  public RandomnessRadixTrieDataPoint(byte[] serializedData, int remainingSize, int rngSize, int seedIndexSize, int byteIndexSize) {
     int currentIndex = 0;
     this.remainingIndexingData = Arrays
         .copyOfRange(serializedData, currentIndex, currentIndex + remainingSize);
     currentIndex += remainingSize;
 
     this.rng = ImplementedPRNGs.values()[serializedData[currentIndex]];
-    currentIndex++;
+    currentIndex+= rngSize;
 
     this.seedIndex = Ints.fromByteArray(
         Arrays.copyOfRange(serializedData, currentIndex, currentIndex + seedIndexSize));
@@ -46,7 +37,21 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
 
     this.byteIndexInRandomness = Ints.fromByteArray(
         Arrays.copyOfRange(serializedData, currentIndex, currentIndex + byteIndexSize));
-    ;
+  }
+
+  public RandomnessRadixTrieDataPoint(byte[] serializedData, int remainingSize) {
+    this(serializedData, remainingSize, ConfigurationHelper.getConfig()
+        .getInt("radix.partition.serialized.rng_index"), ConfigurationHelper.getConfig()
+        .getInt("radix.partition.serialized.byte_index"), ConfigurationHelper.getConfig()
+        .getInt("radix.partition.serialized.seed_index"));
+  }
+
+  public RandomnessRadixTrieDataPoint(byte[] serializedData) {
+    this(serializedData, ConfigurationHelper.getConfig()
+        .getInt("radix.partition.serialized.remaining"), ConfigurationHelper.getConfig()
+        .getInt("radix.partition.serialized.rng_index"), ConfigurationHelper.getConfig()
+        .getInt("radix.partition.serialized.byte_index"), ConfigurationHelper.getConfig()
+        .getInt("radix.partition.serialized.seed_index"));
   }
 
   public ImplementedPRNGs getRng() {
@@ -84,7 +89,6 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
     // TODO maybe only store 3 bytes for seeds, 2 bytes for byteIdx
     byte[] seedIdx = Ints.toByteArray(seedIndex);
     byte[] byteIdx = Ints.toByteArray(byteIndexInRandomness);
-
     return Bytes.concat(remainingIndexingData, prng, seedIdx, byteIdx);
   }
 

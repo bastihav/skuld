@@ -129,4 +129,8 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extend
    * @return meta data
    */
   RadixMetaData getMetaData();
+
+  void serializeMetaData();
+
+  void generate();
 }
