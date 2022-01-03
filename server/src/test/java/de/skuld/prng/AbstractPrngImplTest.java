@@ -40,6 +40,7 @@ public abstract class AbstractPrngImplTest {
 
     for (int i = 0; i < seeds.length; i++) {
       result[i] = getTargetBytes(seeds[i], amountPerSeed);
+      System.out.println(Arrays.toString(result[i]));
     }
 
     return result;

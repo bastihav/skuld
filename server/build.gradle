@@ -14,6 +14,9 @@ repositories {
     maven {
         url 'https://jitpack.io'
     }
+    maven {
+        url "https://projects.itemis.de/nexus/content/repositories/OS/"
+    }
 }
 
 jacoco {
@@ -33,6 +36,7 @@ task cleanTestData(type: Delete) {
 //tasks.clean.dependsOn(tasks.cleanTestData)
 
 test {
+    systemProperty "java.library.path", "C:\\Users\\basti\\Downloads\\z3-4.8.14-x64-win\\z3-4.8.14-x64-win\\bin"
     //dependsOn(generateTestData)
     useJUnitPlatform()
     //finalizedBy cleanTestData
@@ -51,6 +55,11 @@ dependencies {
 
     // java solver
     implementation 'com.github.rayferric:regen:1.0.1'
+
+    // z3 solver
+    implementation files('lib/com.microsoft.z3.jar')
+    runtime group: 'com.microsoft.z3', name: 'libz3.java.win', version: '4.8.8'
+
 
     implementation("com.google.guava:guava:31.0.1-jre")
 
