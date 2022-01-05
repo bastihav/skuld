@@ -6,6 +6,7 @@ import com.google.common.primitives.UnsignedBytes;
 import de.skuld.prng.ImplementedPRNGs;
 import de.skuld.radix.AbstractRadixTrieDataPoint;
 import de.skuld.util.ConfigurationHelper;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byte[]> {
@@ -23,20 +24,26 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
   }
 
   public RandomnessRadixTrieDataPoint(byte[] serializedData, int remainingSize, int rngSize, int seedIndexSize, int byteIndexSize) {
-    int currentIndex = 0;
-    this.remainingIndexingData = Arrays
-        .copyOfRange(serializedData, currentIndex, currentIndex + remainingSize);
-    currentIndex += remainingSize;
+    //int currentIndex = 0;
+    //this.remainingIndexingData = new byte[remainingSize];
+        //Arrays
+        //.copyOfRange(serializedData, currentIndex, currentIndex + remainingSize);
+    //currentIndex += remainingSize;
 
-    this.rng = ImplementedPRNGs.values()[serializedData[currentIndex]];
-    currentIndex+= rngSize;
+    ByteBuffer byteBuffer = ByteBuffer.wrap(serializedData);
+    //byteBuffer.get(remainingIndexingData);
+    this.rng = ImplementedPRNGs.values()[byteBuffer.get()];
+    //this.rng = ImplementedPRNGs.values()[serializedData[currentIndex]];
+    //currentIndex+= rngSize;
+    this.seedIndex = byteBuffer.getInt();
+    this.byteIndexInRandomness = byteBuffer.getInt();
 
-    this.seedIndex = Ints.fromByteArray(
+    /*this.seedIndex = Ints.fromByteArray(
         Arrays.copyOfRange(serializedData, currentIndex, currentIndex + seedIndexSize));
     currentIndex += seedIndexSize;
 
     this.byteIndexInRandomness = Ints.fromByteArray(
-        Arrays.copyOfRange(serializedData, currentIndex, currentIndex + byteIndexSize));
+        Arrays.copyOfRange(serializedData, currentIndex, currentIndex + byteIndexSize));*/
   }
 
   public RandomnessRadixTrieDataPoint(byte[] serializedData, int remainingSize) {

@@ -39,8 +39,9 @@ public class SeedManager {
    *
    * @return
    */
+  // TODO
   private long[] badSeeds() {
-    return new long[]{0, 1};
+    return new long[]{0};
   }
 
   /**

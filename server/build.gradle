@@ -31,6 +31,7 @@ task cleanTestData(type: Delete) {
 
 test {
     //dependsOn(generateTestData)
+    maxHeapSize = "20G"
     useJUnitPlatform()
     //finalizedBy cleanTestData
 }

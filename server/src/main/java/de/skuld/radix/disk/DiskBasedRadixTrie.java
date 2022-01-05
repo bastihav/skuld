@@ -13,7 +13,9 @@ import de.skuld.util.ConfigurationHelper;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -243,12 +245,16 @@ public class DiskBasedRadixTrie extends
 
   @Override
   public void generate() {
+    this.getMetaData().setStatus(RadixTrieStatus.GENERATED);
     if (getMetaData().getStatus() == RadixTrieStatus.CREATED) {
       // start generating data
       getMetaData().setStatus(RadixTrieStatus.GENERATING);
       serializeMetaData();
 
+      long ping = System.nanoTime();
       fillHardwareCaches();
+      long pong = System.nanoTime();
+      System.out.println("hardware caches filled in " + (pong-ping) + " ns");
 
       getMetaData().setStatus(RadixTrieStatus.GENERATED);
       serializeMetaData();
@@ -259,11 +265,56 @@ public class DiskBasedRadixTrie extends
       getMetaData().setStatus(RadixTrieStatus.SORTING_ADDING);
       serializeMetaData();
 
+      long ping = System.nanoTime();
       sortAndAddHardwareCaches();
+      long pong = System.nanoTime();
+      System.out.println("hardware caches sorted and added in " + (pong-ping) + " ns");
 
       getMetaData().setStatus(RadixTrieStatus.FINISHED);
       serializeMetaData();
     }
+  }
+
+  /**
+   * https://stackoverflow.com/questions/2972986/how-to-unmap-a-file-from-memory-mapped-using-filechannel-in-java
+   * @param cb
+   */
+  private static void closeDirectBuffer(ByteBuffer cb) {
+    if (cb==null || !cb.isDirect()) return;
+    // we could use this type cast and call functions without reflection code,
+    // but static import from sun.* package is risky for non-SUN virtual machine.
+    //try { ((sun.nio.ch.DirectBuffer)cb).cleaner().clean(); } catch (Exception ex) { }
+
+    // JavaSpecVer: 1.6, 1.7, 1.8, 9, 10
+    boolean isOldJDK = System.getProperty("java.specification.version","99").startsWith("1.");
+    try {
+      if (isOldJDK) {
+        Method cleaner = cb.getClass().getMethod("cleaner");
+        cleaner.setAccessible(true);
+        Method clean = Class.forName("sun.misc.Cleaner").getMethod("clean");
+        clean.setAccessible(true);
+        clean.invoke(cleaner.invoke(cb));
+      } else {
+        Class unsafeClass;
+        try {
+          unsafeClass = Class.forName("sun.misc.Unsafe");
+        } catch(Exception ex) {
+          // jdk.internal.misc.Unsafe doesn't yet have an invokeCleaner() method,
+          // but that method should be added if sun.misc.Unsafe is removed.
+          unsafeClass = Class.forName("jdk.internal.misc.Unsafe");
+        }
+        Method clean = unsafeClass.getMethod("invokeCleaner", ByteBuffer.class);
+        clean.setAccessible(true);
+        Field theUnsafeField = unsafeClass.getDeclaredField("theUnsafe");
+        theUnsafeField.setAccessible(true);
+        Object theUnsafe = theUnsafeField.get(null);
+        clean.invoke(theUnsafe, cb);
+        System.out.println("cleaned!");
+      }
+    } catch(Exception ex) {
+      ex.printStackTrace();
+    }
+    cb = null;
   }
 
   private void sortAndAddHardwareCaches() {
@@ -278,18 +329,32 @@ public class DiskBasedRadixTrie extends
       try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(), EnumSet.of(
           StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE))) {
         int reads = (int) Math.ceil(((double) fileChannel.size() / maxPartitionBytesInArray));
-        RandomnessRadixTrieDataPoint[] cacheArray = new RandomnessRadixTrieDataPoint[((int) fileChannel.size() / sizeOnDisk)];
+        RandomnessRadixTrieDataPoint[] cacheArray = new RandomnessRadixTrieDataPoint[(int)(fileChannel.size() / sizeOnDisk)];
+        System.out.println("will allocate " + fileChannel.size() + " bytes");
         AtomicInteger posInArray = new AtomicInteger(0);
 
+        long ping = System.nanoTime();
+        System.out.println("reading x" + reads);
         for (int i = 0; i < reads; i++) {
           long offset = (long) i * maxPartitionBytesInArray;
           // TODO remaining can be greater than the max int?
-          long remaining = fileChannel.size() - offset;
+          long remaining = Math.min(fileChannel.size() - offset, maxPartitionBytesInArray);
 
-          MappedByteBuffer mappedByteBuffer = fileChannel.map(MapMode.READ_WRITE, offset, remaining);
+          MappedByteBuffer mappedByteBuffer = fileChannel.map(MapMode.READ_ONLY, offset, remaining);
+          mappedByteBuffer.load();
           //System.out.println("reading " + bite);
           readHardwareCache(cacheArray, posInArray, mappedByteBuffer);
+          closeDirectBuffer(mappedByteBuffer);
+
+          System.out.println(i);
+          if (i == 3) {
+            return;
+          }
         }
+        long pong = System.nanoTime();
+        System.out.println("hardware cache " + bite + " read in " + (pong-ping) + " ns");
+
+        ping = System.nanoTime();
         RandomnessRadixTrieDataPoint[] truncatedArray = new RandomnessRadixTrieDataPoint[posInArray.get()];
         System.arraycopy(cacheArray, 0, truncatedArray, 0, posInArray.get());
         cacheArray = null;
@@ -298,12 +363,28 @@ public class DiskBasedRadixTrie extends
         Arrays.parallelSort(truncatedArray);
         // collapse cacheList into objects according to max depth
         // create new "from" collection constructor in RadixData, saves on merge complexity
+        pong = System.nanoTime();
+        System.out.println("hardware cache " + bite + " sorted in " + (pong-ping) + " ns");
+        ping = System.nanoTime();
         List<DiskBasedRandomnessRadixTrieData> list = collapseCache(truncatedArray);
+        pong = System.nanoTime();
+        System.out.println("hardware cache " + bite + " collapsed in " + (pong-ping) + " ns");
+        ping = System.nanoTime();
         addHardwareCache(list);
+        pong = System.nanoTime();
+        System.out.println("hardware cache " + bite + " added to tree in " + (pong-ping) + " ns");
       } catch (IOException e) {
         e.printStackTrace();
       }
+      deleteHardwareCache((byte) bite);
     }
+    // delete empty directory
+    rootPath.resolve("caches" + rootPath.getFileSystem().getSeparator()).toFile().delete();
+  }
+
+  private void deleteHardwareCache(byte bite) {
+    File file = rootPath.resolve("caches" + rootPath.getFileSystem().getSeparator()+bite+".bin").toFile();
+    file.delete();
   }
 
   private void addHardwareCache(List<DiskBasedRandomnessRadixTrieData> list) {
@@ -347,13 +428,18 @@ public class DiskBasedRadixTrie extends
     int byteIndexSizeOnDisk = ConfigurationHelper.getConfig().getInt("radix.disk_based.hardware_cache.serialized.byte_index");
 
     byte[] serializedData = new byte[sizeOnDisk];
-    byte[] nullBytes = new byte[sizeOnDisk];
-    Arrays.fill(nullBytes, (byte) 0);
 
     while (mappedByteBuffer.hasRemaining() && mappedByteBuffer.remaining() >= sizeOnDisk) {
       mappedByteBuffer.get(serializedData, 0, sizeOnDisk);
-      if (Arrays.equals(serializedData, nullBytes)) {
-        // we can stop here
+
+
+      boolean allZero = true;
+      for (int i = 0; i < sizeOnDisk && allZero; i ++) {
+        allZero = serializedData[i] == 0;
+      }
+
+      if (allZero) {
+        // TODO stop all other reads too
         return;
       }
 
@@ -369,8 +455,8 @@ public class DiskBasedRadixTrie extends
     RNGManager rngManager = new RNGManager();
 
     int partitionSize = ConfigurationHelper.getConfig().getInt("radix.partition.size");
-    int amountPerPRNG = ConfigurationHelper.getConfig().getInt("radix.prng.amount");
-    int partitions = amountPerPRNG / partitionSize;
+    long amountPerPRNG = ConfigurationHelper.getConfig().getLong("radix.prng.amount");
+    long partitions = amountPerPRNG / partitionSize;
 
     final BiMap<Integer, Long> seedMap = getSeedMap();
     for (int seedIndex = 0; seedIndex < seedMap.size(); seedIndex++) {
@@ -378,8 +464,9 @@ public class DiskBasedRadixTrie extends
       for (Class<? extends PRNG> prng : rngManager.getPRNGs()) {
         try {
           PRNG instance = prng.getConstructor(long.class).newInstance(seed);
-          for (int j = 0; j < partitions; j++) {
+          for (long j = 0; j < partitions; j++) {
             byte[] randomness = instance.getRandomBytes(partitionSize);
+            randomness[0] = 0;
             addToHardwareCache(new RandomnessRadixTrieDataPoint(randomness, instance.getPRNG(), seedIndex, seedIndex * 32));
           }
         } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
