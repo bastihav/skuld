@@ -1,10 +1,13 @@
 package de.skuld.util;
 
+import com.google.common.primitives.Ints;
 import java.util.concurrent.RecursiveAction;
 
 public class ParallelMergeSort extends RecursiveAction {
-  private static final int MAX = 1 << 15;
-  private final byte[] array;
+  private static final int MAX = 1 << 13;
+  private final byte[] dataArray;
+  private final int[] indexArray;
+  private final int[] helper;
   private final int low;
   private final int high;
 
@@ -27,8 +30,10 @@ public class ParallelMergeSort extends RecursiveAction {
   private static int chunkSize;
   private static int compareSize;
 
-  public ParallelMergeSort(final byte[] array, final int low, final int high) {
-    this.array = array;
+  public ParallelMergeSort(final byte[] array, final int[] indexArray, final int[] helper, final int low, final int high) {
+    this.dataArray = array;
+    this.indexArray = indexArray;
+    this.helper = helper;
     this.low = low;
     this.high = high;
   }
@@ -53,11 +58,13 @@ public class ParallelMergeSort extends RecursiveAction {
   }
 
   private void swap(int x, int y) {
-    byte[] tmp = new byte[chunkSize];
-
-    System.arraycopy(array, x*chunkSize, tmp, 0, chunkSize);
-    System.arraycopy(array, y*chunkSize, array, x*chunkSize, chunkSize);
-    System.arraycopy(tmp, 0, array, y*chunkSize, chunkSize);
+    //byte[] tmp = new byte[chunkSize];
+    int tmp = indexArray[x];
+    indexArray[x] = indexArray[y];
+    indexArray[y] = tmp;
+    //System.arraycopy(dataArray, x*chunkSize, tmp, 0, chunkSize);
+    //System.arraycopy(dataArray, y*chunkSize, dataArray, x*chunkSize, chunkSize);
+    //System.arraycopy(tmp, 0, dataArray, y*chunkSize, chunkSize);
   }
 
   private void inPlaceMerge(int start, int end) {
@@ -72,14 +79,42 @@ public class ParallelMergeSort extends RecursiveAction {
     }
   }
 
+  private void outPlaceMerge(int s, int e) {
+    int mid = (s + e) / 2;
+
+    System.arraycopy(indexArray, s, helper, s, e + 1 - s);
+
+    int helperLeft = s;
+    int helperRight = mid + 1;
+    int current = s;
+
+    while (helperLeft <= mid && helperRight <= e) {
+      if (compare(helper[helperLeft], helper[helperRight]) <= 0) {
+      //if (helper[helperLeft] <= helper[helperRight]) {
+        indexArray[current] = helper[helperLeft++];
+      } else {
+        indexArray[current] = helper[helperRight++];
+      }
+      current++;
+    }
+
+    while (helperLeft <= mid) {
+      indexArray[current++] = helper[helperLeft++];
+    }
+  }
+
   private int compare(int x, int y) {
+    int indexX = indexArray[x];
+    int indexY = indexArray[y];
+
     for (int i = 0; i < compareSize; i++) {
-      int xIndex = (x * chunkSize) + i;
-      int yIndex = (y * chunkSize) + i;
+      int xIndex = (indexX * chunkSize) + i;
+      int yIndex = (indexY * chunkSize) + i;
 
-      byte xVal = array[xIndex];
-      byte yVal = array[yIndex];
+      byte xVal = dataArray[xIndex];
+      byte yVal = dataArray[yIndex];
 
+      //System.out.println("comparing " + xVal + " and " + yVal);
       int comparison = Byte.compare(xVal, yVal);
       if (comparison != 0) {
         return comparison;
@@ -97,17 +132,20 @@ public class ParallelMergeSort extends RecursiveAction {
 
     mergeSort(s, mid);
     mergeSort(mid + 1, e);
-    inPlaceMerge(s, e);
+    //inPlaceMerge(s, e);
+    outPlaceMerge(s, e);
   }
 
   private void parallelMergeSort() {
     final int middle = (low + high) / 2;
-    final ParallelMergeSort left = new ParallelMergeSort(array, low, middle);
+    final ParallelMergeSort left = new ParallelMergeSort(dataArray, indexArray, helper, low, middle);
     //System.out.println("left: " + low + " " + middle);
-    final ParallelMergeSort right = new ParallelMergeSort(array, middle + 1, high);
+    final ParallelMergeSort right = new ParallelMergeSort(dataArray, indexArray, helper, middle + 1, high);
     //System.out.println("right: " + (middle+1) + " " + high);
     invokeAll(left, right);
     //System.out.println("----------------------------------------------------");
-    inPlaceMerge(low, high);
+
+    //inPlaceMerge(low, high);
+    outPlaceMerge(low, high);
   }
 }

@@ -28,6 +28,7 @@ public class WrappedArrayTest {
     int remainingOnDisk = ConfigurationHelper.getConfig().getInt("radix.disk_based.hardware_cache.serialized.remaining");
     final int maxPartitionBytesInArray = Integer.MAX_VALUE - (Integer.MAX_VALUE % sizeOnDisk);
 
+    // TODO array might be bigger than necessary!
     byte[] array = new byte[maxPartitionBytesInArray];
 
     try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(), EnumSet.of(
@@ -64,17 +65,23 @@ public class WrappedArrayTest {
   public void shortTest() {
     int chunkSize = 4;
     int compareSize = 2;
-    int amount = 32;
+    int amount = 6;
 
     JavaRandom random = new JavaRandom(0);
     byte[] array = random.getRandomBytes(chunkSize * amount);
 
     WrappedByteArray wrappedByteArray = new WrappedByteArray(array, chunkSize, amount, compareSize);
 
-    System.out.println(Arrays.toString(array));
+    System.out.println("indices: ");
+    System.out.println(Arrays.toString(wrappedByteArray.getIndexArray()));
+    System.out.println("values: ");
+    System.out.println(BytePrinter.bytesToHex(array));
 
     wrappedByteArray.sort();
 
+    System.out.println("indices: ");
+    System.out.println(Arrays.toString(wrappedByteArray.getIndexArray()));
+    System.out.println("values: ");
     System.out.println(Arrays.toString(array));
   }
 
