@@ -1,6 +1,5 @@
 package de.skuld.util;
 
-import com.google.common.primitives.Ints;
 import java.util.concurrent.RecursiveAction;
 
 public class ParallelMergeSort extends RecursiveAction {
@@ -8,6 +7,7 @@ public class ParallelMergeSort extends RecursiveAction {
   private final byte[] dataArray;
   private final int[] indexArray;
   private final int[] helper;
+  private final int[] firstBytes;
   private final int low;
   private final int high;
 
@@ -30,9 +30,11 @@ public class ParallelMergeSort extends RecursiveAction {
   private static int chunkSize;
   private static int compareSize;
 
-  public ParallelMergeSort(final byte[] array, final int[] indexArray, final int[] helper, final int low, final int high) {
+  public ParallelMergeSort(final byte[] array, final int[] indexArray, final int[] helper,
+      int[] firstBytes, final int low, final int high) {
     this.dataArray = array;
     this.indexArray = indexArray;
+    this.firstBytes = firstBytes;
     this.helper = helper;
     this.low = low;
     this.high = high;
@@ -67,7 +69,7 @@ public class ParallelMergeSort extends RecursiveAction {
     //System.arraycopy(tmp, 0, dataArray, y*chunkSize, chunkSize);
   }
 
-  private void inPlaceMerge(int start, int end) {
+/*  private void inPlaceMerge(int start, int end) {
     int gap = end - start + 1;
     for (gap = nextGap(gap); gap > 0; gap = nextGap(gap)) {
       for (int i = start; i + gap <= end; i++) {
@@ -77,7 +79,7 @@ public class ParallelMergeSort extends RecursiveAction {
         }
       }
     }
-  }
+  }*/
 
   private void outPlaceMerge(int s, int e) {
     int mid = (s + e) / 2;
@@ -107,7 +109,16 @@ public class ParallelMergeSort extends RecursiveAction {
     int indexX = indexArray[x];
     int indexY = indexArray[y];
 
-    for (int i = 0; i < compareSize; i++) {
+    int firstBytesX = firstBytes[indexX];
+    int firstBytesY = firstBytes[indexY];
+    int comparison = Integer.compare(firstBytesX, firstBytesY);
+
+    if (comparison != 0) {
+      return comparison;
+    }
+
+
+    for (int i = 4; i < compareSize; i++) {
       int xIndex = (indexX * chunkSize) + i;
       int yIndex = (indexY * chunkSize) + i;
 
@@ -115,7 +126,7 @@ public class ParallelMergeSort extends RecursiveAction {
       byte yVal = dataArray[yIndex];
 
       //System.out.println("comparing " + xVal + " and " + yVal);
-      int comparison = Byte.compare(xVal, yVal);
+      comparison = Byte.compare(xVal, yVal);
       if (comparison != 0) {
         return comparison;
       }
@@ -138,9 +149,11 @@ public class ParallelMergeSort extends RecursiveAction {
 
   private void parallelMergeSort() {
     final int middle = (low + high) / 2;
-    final ParallelMergeSort left = new ParallelMergeSort(dataArray, indexArray, helper, low, middle);
+    final ParallelMergeSort left = new ParallelMergeSort(dataArray, indexArray, helper, firstBytes,
+        low, middle);
     //System.out.println("left: " + low + " " + middle);
-    final ParallelMergeSort right = new ParallelMergeSort(dataArray, indexArray, helper, middle + 1, high);
+    final ParallelMergeSort right = new ParallelMergeSort(dataArray, indexArray, helper, firstBytes,
+        middle + 1, high);
     //System.out.println("right: " + (middle+1) + " " + high);
     invokeAll(left, right);
     //System.out.println("----------------------------------------------------");
