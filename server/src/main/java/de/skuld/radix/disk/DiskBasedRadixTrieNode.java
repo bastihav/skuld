@@ -74,6 +74,7 @@ public class DiskBasedRadixTrieNode extends
   public String serialize() {
     File file = p.resolve(ConfigurationHelper.getConfig().getString("radix.leaf.file_name"))
         .toFile();
+    int sizeOnDisk = ConfigurationHelper.getConfig().getInt("radix.partition.serialized");
 
     try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(), EnumSet.of(
         StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE))) {
@@ -81,12 +82,16 @@ public class DiskBasedRadixTrieNode extends
       if (readSizeInBytes != 0) {
         System.out.println("File Should be empty");
       }
-      byte[] serializedData = this.data.serialize(trie);
 
-      long writeSizeInBytes = readSizeInBytes + serializedData.length;
-      MappedByteBuffer mappedByteBuffer = fileChannel.map(MapMode.READ_WRITE, 0, writeSizeInBytes);
-      mappedByteBuffer.position(0);
-      mappedByteBuffer.put(serializedData);
+      long writeSize = (long) this.data.getElementCount() * sizeOnDisk;
+
+      //byte[] serializedData = this.data.serialize(trie);
+
+      MappedByteBuffer mappedByteBuffer = fileChannel.map(MapMode.READ_WRITE, readSizeInBytes, writeSize);
+
+      this.data.serialize(mappedByteBuffer, 0);
+      //mappedByteBuffer.position(0);
+      //mappedByteBuffer.put(serializedData);
 
     } catch (IOException e) {
       e.printStackTrace();

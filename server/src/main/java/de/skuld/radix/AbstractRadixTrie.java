@@ -144,14 +144,7 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
 
       return this.add(newNode, data, indexingData);
     } else {
-      Collection<P> dataPoints = data.getDataPoints();
-      if (dataPoints.size() > 0 && dataPoints.stream().findFirst()
-          .get() instanceof RandomnessRadixTrieDataPoint) {
-        Collection<RandomnessRadixTrieDataPoint> dataPointCollection = (Collection<RandomnessRadixTrieDataPoint>) dataPoints;
-
-        dataPointCollection
-            .forEach(dp -> dp.removePrefixFromRemainingIndexingData(coveredEdges.length));
-      }
+      data.removePrefixFromRemainingIndexingData(coveredEdges.length);
 
       // merge instead
       Optional<E> table = parent.getOutgoingEdges().stream().findFirst();

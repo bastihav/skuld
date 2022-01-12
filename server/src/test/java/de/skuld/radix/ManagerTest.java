@@ -5,11 +5,13 @@ import de.skuld.radix.manager.RadixManager;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class ManagerTest {
 
   @Test
+  @Disabled
   public void test() {
     Path tempDir = Paths.get("G:\\skuld\\");
     DiskBasedRadixTrie trie = new DiskBasedRadixTrie(tempDir, new Date(0));

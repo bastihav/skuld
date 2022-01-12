@@ -6,7 +6,9 @@ import com.google.common.primitives.UnsignedBytes;
 import de.skuld.prng.ImplementedPRNGs;
 import de.skuld.radix.AbstractRadixTrieDataPoint;
 import de.skuld.util.ConfigurationHelper;
+import de.skuld.util.WrappedByteBuffers;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.util.Arrays;
 
 public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byte[]> {
@@ -14,9 +16,14 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
   private final ImplementedPRNGs rng;
   private final int seedIndex;
   private final int byteIndexInRandomness;
+  private final WrappedByteBuffers buffers;
+  private final int bufferIndex;
+  private int remainingIndexingDataOffset = 0;
 
   public RandomnessRadixTrieDataPoint(byte[] remainingBytes, ImplementedPRNGs rng, int seedIndex,
       int byteIndexInRandomness) {
+    this.buffers = null;
+    this.bufferIndex = -1;
     this.remainingIndexingData = Arrays.copyOf(remainingBytes, remainingBytes.length);
     this.rng = rng;
     this.seedIndex = seedIndex;
@@ -25,13 +32,15 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
 
   public RandomnessRadixTrieDataPoint(byte[] serializedData, int remainingSize, int rngSize, int seedIndexSize, int byteIndexSize) {
     //int currentIndex = 0;
-    //this.remainingIndexingData = new byte[remainingSize];
+    this.buffers = null;
+    this.remainingIndexingData = new byte[remainingSize];
+    this.bufferIndex = -1;
         //Arrays
         //.copyOfRange(serializedData, currentIndex, currentIndex + remainingSize);
     //currentIndex += remainingSize;
 
     ByteBuffer byteBuffer = ByteBuffer.wrap(serializedData);
-    //byteBuffer.get(remainingIndexingData);
+    byteBuffer.get(remainingIndexingData);
     this.rng = ImplementedPRNGs.values()[byteBuffer.get()];
     //this.rng = ImplementedPRNGs.values()[serializedData[currentIndex]];
     //currentIndex+= rngSize;
@@ -44,6 +53,14 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
 
     this.byteIndexInRandomness = Ints.fromByteArray(
         Arrays.copyOfRange(serializedData, currentIndex, currentIndex + byteIndexSize));*/
+  }
+
+  public RandomnessRadixTrieDataPoint(WrappedByteBuffers buffers, int index) {
+    this.buffers = buffers;
+    this.bufferIndex = index;
+    this.rng = null;
+    this.seedIndex = -1;
+    this.byteIndexInRandomness = -1;
   }
 
   public RandomnessRadixTrieDataPoint(byte[] serializedData, int remainingSize) {
@@ -61,6 +78,16 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
         .getInt("radix.partition.serialized.seed_index"));
   }
 
+  @Override
+  public byte[] getRemainingIndexingData() {
+    if (buffers != null) {
+      int serializedRemainingSize = ConfigurationHelper.getConfig().getInt("radix.partition.serialized.remaining");
+
+      return Arrays.copyOfRange(buffers.get(bufferIndex), remainingIndexingDataOffset, serializedRemainingSize - remainingIndexingDataOffset);
+    }
+    return super.getRemainingIndexingData();
+  }
+
   public ImplementedPRNGs getRng() {
     return rng;
   }
@@ -76,7 +103,7 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
   @Override
   public String toString() {
     return "RandomnessRadixTrieDataPoint{" +
-        "remainingBytes=" + Arrays.toString(remainingIndexingData) +
+        "remainingBytes=" + Arrays.toString(getRemainingIndexingData()) +
         ", rng=" + rng +
         ", seedIndex=" + seedIndex +
         ", byteIndexInRandomness=" + byteIndexInRandomness +
@@ -85,8 +112,12 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
 
   @Override
   public void removePrefixFromRemainingIndexingData(int amount) {
-    this.remainingIndexingData = Arrays
-        .copyOfRange(remainingIndexingData, amount, remainingIndexingData.length);
+    if (buffers != null) {
+      this.remainingIndexingDataOffset += amount;
+    } else {
+      this.remainingIndexingData = Arrays
+          .copyOfRange(remainingIndexingData, amount, remainingIndexingData.length);
+    }
   }
 
   @Override
@@ -96,7 +127,7 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
     // TODO maybe only store 3 bytes for seeds, 2 bytes for byteIdx
     byte[] seedIdx = Ints.toByteArray(seedIndex);
     byte[] byteIdx = Ints.toByteArray(byteIndexInRandomness);
-    return Bytes.concat(remainingIndexingData, prng, seedIdx, byteIdx);
+    return Bytes.concat(getRemainingIndexingData(), prng, seedIdx, byteIdx);
   }
 
   @Override
@@ -107,19 +138,42 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
 
   @Override
   public void serialize(byte[] serializedData, int index) {
-    int currentIndex = index;
+    if (buffers != null) {
+      int length = ConfigurationHelper.getConfig().getInt("radix.partition.serialized");
 
-    System.arraycopy(remainingIndexingData, 0, serializedData, currentIndex,
-        remainingIndexingData.length);
-    currentIndex += remainingIndexingData.length;
+      System.arraycopy(buffers.get(bufferIndex), remainingIndexingDataOffset, serializedData, index,
+          length);
+    } else {
+      int currentIndex = index;
+      byte[] remainingData = getRemainingIndexingData();
+      System.arraycopy(remainingData, 0, serializedData, currentIndex,
+          remainingData.length);
+      currentIndex += remainingData.length;
 
-    System.arraycopy(new byte[]{((Integer) rng.ordinal()).byteValue()}, 0, serializedData,
-        currentIndex, 1);
-    currentIndex++;
+      System.arraycopy(new byte[]{((Integer) rng.ordinal()).byteValue()}, 0, serializedData,
+          currentIndex, 1);
+      currentIndex++;
 
-    System.arraycopy(Ints.toByteArray(seedIndex), 0, serializedData, currentIndex, 4);
-    currentIndex += 4;
+      System.arraycopy(Ints.toByteArray(seedIndex), 0, serializedData, currentIndex, 4);
+      currentIndex += 4;
 
-    System.arraycopy(Ints.toByteArray(byteIndexInRandomness), 0, serializedData, currentIndex, 4);
+      System.arraycopy(Ints.toByteArray(byteIndexInRandomness), 0, serializedData, currentIndex, 4);
+    }
+  }
+
+  public void serialize(ByteBuffer writeBuffer, int index) {
+    //System.out.println("serialize dp " + index);
+    if (buffers != null) {
+      byte[] array = buffers.get(bufferIndex);
+
+      writeBuffer.position(index).put(array, remainingIndexingDataOffset, array.length - remainingIndexingDataOffset);
+    } else {
+      byte[] remainingData = getRemainingIndexingData();
+      writeBuffer.position(index);
+      writeBuffer.put(remainingData);
+      writeBuffer.put(((Integer) rng.ordinal()).byteValue());
+      writeBuffer.putInt(seedIndex);
+      writeBuffer.putInt(byteIndexInRandomness);
+    }
   }
 }

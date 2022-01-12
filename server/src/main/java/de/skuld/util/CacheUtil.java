@@ -7,24 +7,33 @@ import java.util.Arrays;
 
 public class CacheUtil {
 
-  public static int lastIndexOf(byte[] bytes, AbstractRadixTrieDataPoint<byte[]>[] array, int startIndex, int endIndex) {
-    return binarySearch(array, startIndex, endIndex, bytes);
+  /**
+   *
+   * @param bytes
+   * @param array
+   * @param startIndex
+   * @param endIndex exclusive
+   * @return
+   */
+  public static int lastIndexOf(int[] sortedIndices, byte[] bytes, WrappedByteBuffers array, int startIndex, int endIndex) {
+    return binarySearch(sortedIndices, array, startIndex, endIndex-1, bytes);
   }
 
-  private static int binarySearch(AbstractRadixTrieDataPoint<byte[]>[] array, int left, int right, byte[] query) {
+  private static int binarySearch(int[] sortedIndices, WrappedByteBuffers array, int left, int right, byte[] query) {
     while (left <= right) {
       int mid = left + (right - left) / 2;
 
+      if (mid >= array.size()-1) {
+        return mid;
+      }
+
       int comparison = UnsignedBytes.lexicographicalComparator().compare(query,
-          Arrays.copyOfRange(array[mid].getRemainingIndexingData(), 0, query.length));
+          Arrays.copyOfRange(array.get(sortedIndices[mid]), 0, query.length));
       if (comparison < 0) {
         right = mid - 1;
       } else if (comparison == 0) {
-        if (mid >= query.length-1) {
-          return mid;
-        }
         if (UnsignedBytes.lexicographicalComparator().compare(query,
-            Arrays.copyOfRange(array[mid+1].getRemainingIndexingData(), 0, query.length)) >= 1) {
+            Arrays.copyOfRange(array.get(sortedIndices[mid+1]), 0, query.length)) < 0) {
           return mid;
         } else {
           left = mid + 1;

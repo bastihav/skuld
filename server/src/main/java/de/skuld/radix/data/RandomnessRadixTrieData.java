@@ -4,6 +4,7 @@ import de.skuld.radix.AbstractRadixTrieData;
 import de.skuld.radix.disk.DiskBasedRadixTrie;
 import de.skuld.util.BytePrinter;
 import de.skuld.util.ConfigurationHelper;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -37,6 +38,11 @@ public class RandomnessRadixTrieData extends
   }
 
   @Override
+  public int getElementCount() {
+    return dataPoints.size();
+  }
+
+  @Override
   public RandomnessRadixTrieData mergeData(
       AbstractRadixTrieData<byte[], RandomnessRadixTrieDataPoint> other) {
     this.dataPoints.addAll(other.getDataPoints());
@@ -55,6 +61,19 @@ public class RandomnessRadixTrieData extends
     });
 
     return serializedData;
+  }
+
+  @Override
+  public void serialize(ByteBuffer mappedByteBuffer, int offset) {
+    //System.out.println("serialize data " + offset);
+    int partitionSizeOnDisk = ConfigurationHelper.getConfig().getInt("radix.partition.serialized");
+    AtomicInteger index = new AtomicInteger(offset);
+    dataPoints.forEach(dp -> dp.serialize(mappedByteBuffer, index.getAndAdd(partitionSizeOnDisk)));
+  }
+
+  @Override
+  public void removePrefixFromRemainingIndexingData(int amount) {
+    this.dataPoints.forEach(dp -> dp.removePrefixFromRemainingIndexingData(amount));
   }
 
   @Override

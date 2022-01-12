@@ -5,7 +5,9 @@ import de.skuld.radix.AbstractRadixTrieData;
 import de.skuld.radix.data.RandomnessRadixTrieData;
 import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
 import de.skuld.util.ConfigurationHelper;
+import de.skuld.util.WrappedByteBuffers;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -26,6 +28,10 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
   private long writeSizeInBytes;
   private boolean resolved = false;
   private DiskBasedRadixTrie trie;
+  private WrappedByteBuffers buffer = null;
+  private int startIndex = -1;
+  private int endIndex = -1;
+  private int remainingIndexingDataOffset = 0;
 
   public DiskBasedRandomnessRadixTrieData(RandomnessRadixTrieDataPoint data,
       DiskBasedRadixTrie trie) {
@@ -35,12 +41,55 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
     this.trie = trie;
   }
 
+  public DiskBasedRandomnessRadixTrieData(DiskBasedRadixTrie trie, WrappedByteBuffers buffer, int startIndex, int endIndex) {
+    super(null);
+    this.p = null;
+    this.resolved = true;
+    this.trie = trie;
+    this.buffer = buffer;
+    this.startIndex = startIndex;
+    this.endIndex = endIndex;
+  }
+
   public DiskBasedRandomnessRadixTrieData(Path p) {
     super(null);
     if (!p.toFile().exists()) {
       throw new AssertionError("File does not exist");
     } else {
       this.p = p;
+    }
+  }
+
+  @Override
+  public void serialize(ByteBuffer writeBuffer, int offset) {
+    int[] indices = buffer.getIndexArray();
+    if (this.buffer != null) {
+      writeBuffer.position(offset);
+      for (int i = startIndex; i <= endIndex; i++) {
+        byte[] array = buffer.get(indices[i]);
+
+        writeBuffer.put(array, remainingIndexingDataOffset, array.length - remainingIndexingDataOffset);
+      }
+    } else {
+      super.serialize(mappedByteBuffer, offset);
+    }
+  }
+
+  @Override
+  public int getElementCount() {
+    if (buffer != null) {
+      // TODO refactor this to have endIndex exclusive
+      return endIndex - startIndex + 1;
+    }
+    return super.getElementCount();
+  }
+
+  @Override
+  public void removePrefixFromRemainingIndexingData(int amount) {
+    if (buffer != null) {
+      this.remainingIndexingDataOffset += amount;
+    } else {
+      super.removePrefixFromRemainingIndexingData(amount);
     }
   }
 
