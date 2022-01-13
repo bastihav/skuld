@@ -16,7 +16,7 @@ public class PerformanceTest {
     long ping = System.nanoTime();
 
     for (long i = 0; i < Integer.MAX_VALUE; i++) {
-      int a= Long.compareUnsigned(x,y);
+      int a = Long.compareUnsigned(x,y);
     }
 
     long pong = System.nanoTime();
