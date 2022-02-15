@@ -31,28 +31,15 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
   }
 
   public RandomnessRadixTrieDataPoint(byte[] serializedData, int remainingSize, int rngSize, int seedIndexSize, int byteIndexSize) {
-    //int currentIndex = 0;
     this.buffers = null;
     this.remainingIndexingData = new byte[remainingSize];
     this.bufferIndex = -1;
-        //Arrays
-        //.copyOfRange(serializedData, currentIndex, currentIndex + remainingSize);
-    //currentIndex += remainingSize;
 
     ByteBuffer byteBuffer = ByteBuffer.wrap(serializedData);
     byteBuffer.get(remainingIndexingData);
     this.rng = ImplementedPRNGs.values()[byteBuffer.get()];
-    //this.rng = ImplementedPRNGs.values()[serializedData[currentIndex]];
-    //currentIndex+= rngSize;
     this.seedIndex = byteBuffer.getInt();
     this.byteIndexInRandomness = byteBuffer.getInt();
-
-    /*this.seedIndex = Ints.fromByteArray(
-        Arrays.copyOfRange(serializedData, currentIndex, currentIndex + seedIndexSize));
-    currentIndex += seedIndexSize;
-
-    this.byteIndexInRandomness = Ints.fromByteArray(
-        Arrays.copyOfRange(serializedData, currentIndex, currentIndex + byteIndexSize));*/
   }
 
   public RandomnessRadixTrieDataPoint(WrappedByteBuffers buffers, int index) {

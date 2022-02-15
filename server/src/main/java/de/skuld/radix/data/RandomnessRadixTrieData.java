@@ -2,7 +2,7 @@ package de.skuld.radix.data;
 
 import de.skuld.radix.AbstractRadixTrieData;
 import de.skuld.radix.disk.DiskBasedRadixTrie;
-import de.skuld.util.BytePrinter;
+import de.skuld.util.ByteHexUtil;
 import de.skuld.util.ConfigurationHelper;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -31,7 +31,7 @@ public class RandomnessRadixTrieData extends
     String[] result = new String[data.length];
 
     for (int i = 0; i < data.length; i++) {
-      result[i] = BytePrinter.byteToHex(data[i]);
+      result[i] = ByteHexUtil.byteToHex(data[i]);
     }
 
     return result;
@@ -47,6 +47,12 @@ public class RandomnessRadixTrieData extends
       AbstractRadixTrieData<byte[], RandomnessRadixTrieDataPoint> other) {
     this.dataPoints.addAll(other.getDataPoints());
     return this;
+  }
+
+  // TODO
+  @Override
+  public Collection<RandomnessRadixTrieDataPoint> getDataPoints(byte[] indexingData) {
+    return null;
   }
 
   public byte[] serialize(DiskBasedRadixTrie trie) {

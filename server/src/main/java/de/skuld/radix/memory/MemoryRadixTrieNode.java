@@ -52,7 +52,7 @@ public class MemoryRadixTrieNode extends
 
   @Override
   public Collection<StringRadixTrieEdge> getOutgoingEdges() {
-    return Objects.requireNonNullElse(outgoingEdges, Collections.EMPTY_LIST);
+    return Objects.requireNonNullElse(outgoingEdges, Collections.emptyList());
   }
 
   @Override

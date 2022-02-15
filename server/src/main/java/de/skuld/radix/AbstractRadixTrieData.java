@@ -1,12 +1,17 @@
 package de.skuld.radix;
 
+import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.util.Collection;
+import java.util.Optional;
 
 public abstract class AbstractRadixTrieData<D, P> {
 
+  @SuppressWarnings("UnusedReturnValue")
   public abstract AbstractRadixTrieData<D, P> mergeData(AbstractRadixTrieData<D, P> other);
+
+  public abstract Collection<P> getDataPoints(D indexingData);
 
   public abstract Collection<P> getDataPoints();
 

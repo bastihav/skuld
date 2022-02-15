@@ -1,6 +1,7 @@
 package de.skuld.radix.manager;
 
 import de.skuld.prng.PRNG;
+import de.skuld.util.ConfigurationHelper;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -10,8 +11,7 @@ import java.util.stream.LongStream;
 
 public class SeedManager {
 
-  // 60 seconds * 60 minutes * 24 hours * 2 days
-  private static final int UNIX_TIME_TO_GENERATE = 172800;
+  private static final int UNIX_TIME_TO_GENERATE = ConfigurationHelper.getConfig().getInt("radix.prng.unix");
   private final RNGManager rngManager;
 
   public SeedManager(RNGManager rngManager) {
@@ -23,15 +23,15 @@ public class SeedManager {
    *
    * @return seed array
    */
+  // TODO
   public long[] getSeeds(Date scanDate) {
     long[] unixSeeds = getUnixSeeds(scanDate);
     long[] defaultSeeds = getDefaultSeeds();
     long[] badSeeds = badSeeds();
 
-/*    return LongStream
+    return LongStream
         .concat(LongStream.concat(Arrays.stream(unixSeeds), Arrays.stream(defaultSeeds)),
-            Arrays.stream(badSeeds)).distinct().toArray();*/
-    return badSeeds;
+            Arrays.stream(badSeeds)).distinct().toArray();
   }
 
   /**

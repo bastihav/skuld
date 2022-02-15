@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Optional;
 import java.util.Random;
@@ -28,7 +29,7 @@ public class DiskBasedRadixTrieTest {
     Path tempDir = Paths.get("G:\\skuld\\");
     //Path tempDir = Files.createTempDirectory("skuld");
 
-    DiskBasedRadixTrie trie = new DiskBasedRadixTrie(tempDir, null);
+    DiskBasedRadixTrie trie = new DiskBasedRadixTrie(tempDir);
 
     //trie.createEdge(new String[]{"test"}, trie.getRoot());
 
@@ -89,7 +90,7 @@ public class DiskBasedRadixTrieTest {
     System.out.println(trie.getNode(randomness));
     System.out.println(trie.getNode(randomness).get().getData());
     System.out.println(" -- ");
-    System.out.println(trie.getNode(randomness).get().getData().getDataPoint(randomness));
+    System.out.println(trie.getNode(randomness).get().getData().getDataPoints(randomness));
   }
 
   @Test
@@ -117,7 +118,7 @@ public class DiskBasedRadixTrieTest {
 
     //long[] dataPoints = new long[testSize];
     long ping = System.nanoTime();
-    DiskBasedRadixTrie trie = new DiskBasedRadixTrie(tempDir, null);
+    DiskBasedRadixTrie trie = new DiskBasedRadixTrie(tempDir);
     Random random = new Random(0);
 
     for (int i = 0; i < testSize; i++) {
@@ -164,7 +165,7 @@ public class DiskBasedRadixTrieTest {
 
     //long[] dataPoints = new long[testSize];
     long ping = System.nanoTime();
-    DiskBasedRadixTrie trie = new DiskBasedRadixTrie(tempDir, null);
+    DiskBasedRadixTrie trie = new DiskBasedRadixTrie(tempDir);
     Random random = new Random(0);
 
     for (int i = 0; i < testSize; i++) {
@@ -215,7 +216,7 @@ public class DiskBasedRadixTrieTest {
 
     //long[] dataPoints = new long[testSize];
     long ping = System.nanoTime();
-    DiskBasedRadixTrie trie = new DiskBasedRadixTrie(tempDir, null);
+    DiskBasedRadixTrie trie = new DiskBasedRadixTrie(tempDir);
     Random random = new Random(0);
 
     byte[] randomness = new byte[32];
@@ -255,8 +256,8 @@ public class DiskBasedRadixTrieTest {
     Optional<DiskBasedRadixTrieNode> node = trie.getNode(randomness);
     if (node.isPresent()) {
       System.out.println("node found ");
-      Optional<RandomnessRadixTrieDataPoint> dp = node.get().getData().getDataPoint(randomness);
-      if (dp.isPresent()) {
+      Collection<RandomnessRadixTrieDataPoint> dp = node.get().getData().getDataPoints(randomness);
+      if (!dp.isEmpty()) {
         System.out.println("found dp");
       }
     }
@@ -286,7 +287,7 @@ public class DiskBasedRadixTrieTest {
 
     long[] dataPoints = new long[testSize];
 
-    DiskBasedRadixTrie trie = new DiskBasedRadixTrie(tempDir, null);
+    DiskBasedRadixTrie trie = new DiskBasedRadixTrie(tempDir);
     Random random = new Random(0);
     byte[] randomness = new byte[32];
     random.nextBytes(randomness);
@@ -338,7 +339,7 @@ public class DiskBasedRadixTrieTest {
     boolean[] hasNode = new boolean[testSize];
     boolean[] hasDp = new boolean[testSize];
 
-    DiskBasedRadixTrie trie = new DiskBasedRadixTrie(tempDir, null);
+    DiskBasedRadixTrie trie = new DiskBasedRadixTrie(tempDir);
     Random random = new Random(new Date().getTime());
 
     for (int i = 0; i < testSize; i++) {
@@ -351,8 +352,8 @@ public class DiskBasedRadixTrieTest {
 
       if (node.isPresent()) {
         hasNode[i] = true;
-        Optional<RandomnessRadixTrieDataPoint> dp = node.get().getData().getDataPoint(randomness);
-        if (dp.isPresent()) {
+        Collection<RandomnessRadixTrieDataPoint> dp = node.get().getData().getDataPoints(randomness);
+        if (!dp.isEmpty()) {
           hasDp[i] = true;
         }
       }

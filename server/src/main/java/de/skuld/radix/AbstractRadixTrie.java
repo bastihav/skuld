@@ -6,6 +6,7 @@ import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
 import de.skuld.util.ConfigurationHelper;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,24 +20,35 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
   private static final Logger LOGGER = LogManager.getLogger();
   protected final BiMap<Integer, Long> seedMap = HashBiMap.create();
   protected N root = getDummyNode();
-  protected RadixMetaData metaData;
+  protected RadixMetaData metaData = new RadixMetaData();
 
   public AbstractRadixTrie() {
-    this.metaData = new RadixMetaData(UUID.randomUUID(), new Date(), RadixTrieStatus.CREATED);
+    this.metaData.setDate(new Date());
+    this.metaData.setId(UUID.randomUUID());
+    this.metaData.setStatus(RadixTrieStatus.CREATED);
   }
 
   public AbstractRadixTrie(Date date) {
-    this();
     this.metaData.setDate(date);
+    this.metaData.setId(UUID.randomUUID());
+    this.metaData.setStatus(RadixTrieStatus.CREATED);
   }
 
   public AbstractRadixTrie(RadixTrieStatus status) {
-    this();
+    this.metaData.setDate(new Date());
+    this.metaData.setId(UUID.randomUUID());
     this.metaData.setStatus(status);
   }
 
+  public AbstractRadixTrie(Date date, UUID uuid) {
+    this.metaData.setDate(date);
+    this.metaData.setId(uuid);
+    this.metaData.setStatus(RadixTrieStatus.CREATED);
+  }
+
   public AbstractRadixTrie(Date date, RadixTrieStatus status) {
-    this(date);
+    this.metaData.setDate(date);
+    this.metaData.setId(UUID.randomUUID());
     this.metaData.setStatus(status);
   }
 
@@ -65,6 +77,7 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
     String[] coveredEdges = parent.getPathFromRoot();
 
     if (parent.isLeafNode() && parent != root) {
+      System.out.println("merging under " + Arrays.toString(coveredEdges));
       return parent.mergeNodes(data);
     }
 
@@ -152,16 +165,7 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
         return this.add(table.get().getChild(), data, indexingData);
       }
 
-      N leafNode = this.createNode(data, parent.getParentEdge());
-
-      /*if (LOGGER.getLevel() == Level.DEBUG) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Created new node for data: {").append(Arrays.toString(edges))
-            .append("} with path (from root): ");
-        leafNode.getEdgesFromRoot()
-            .forEach(e -> sb.append(Arrays.toString(e.getLabel())).append(", "));
-        LOGGER.debug(sb.toString());
-      }*/
+      this.createNode(data, parent.getParentEdge());
     }
     return true;
   }
@@ -231,5 +235,36 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
       }
     }
     return Optional.of(currentNode);
+  }
+
+  @Override
+  public Optional<P> search(@NotNull I indexingData) {
+
+    int partitionSize = ConfigurationHelper.getConfig().getInt("radix.partition.size");
+
+    // TODO if we shift too often, we have to many partial matches which tanks our performance
+    for (int i = 0; i < partitionSize-5; i++) {
+      // shift
+      I shiftedIndexingData = shiftIndexingData(indexingData, i);
+      I discardedIndexingData = getDiscardedIndexingData(indexingData, i);
+
+      System.out.println("this search is with " +((byte[]) shiftedIndexingData).length);
+
+      // search
+      Optional<N> node =  getNode(shiftedIndexingData);
+      Collection<P> dataPoints = node.isPresent() && node.get().isLeafNode() ?
+          node.get().getData().getDataPoints(shiftedIndexingData) : Collections.emptyList();
+
+      System.out.println("node present?: " + node.isPresent());
+      System.out.println("dataPoints with shifted indexing data?: " + dataPoints.size());
+
+      // check
+      for (P dataPoint : dataPoints) {
+        if (checkDiscardedIndexingData(dataPoint, discardedIndexingData)) {
+          return Optional.of(dataPoint);
+        }
+      }
+    }
+    return Optional.empty();
   }
 }

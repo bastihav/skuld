@@ -9,16 +9,25 @@ public class CacheUtil {
 
   /**
    *
-   * @param bytes
+   * @param query
    * @param array
    * @param startIndex
    * @param endIndex exclusive
    * @return
    */
-  public static int lastIndexOf(int[] sortedIndices, byte[] bytes, WrappedByteBuffers array, int startIndex, int endIndex) {
-    return binarySearch(sortedIndices, array, startIndex, endIndex-1, bytes);
+  public static int lastIndexOf(int[] sortedIndices, byte[] query, WrappedByteBuffers array, int startIndex, int endIndex) {
+    return binarySearch(sortedIndices, array, startIndex, endIndex-1, query);
   }
 
+  /**
+   * not really binary search, always gets the lst index of this occurrence
+   * @param sortedIndices
+   * @param array
+   * @param left
+   * @param right
+   * @param query
+   * @return
+   */
   private static int binarySearch(int[] sortedIndices, WrappedByteBuffers array, int left, int right, byte[] query) {
     while (left <= right) {
       int mid = left + (right - left) / 2;

@@ -1,5 +1,6 @@
 package de.skuld.radix;
 
+import com.google.common.collect.ObjectArrays;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
@@ -63,6 +64,7 @@ public abstract class AbstractRadixTrieNode<D extends AbstractRadixTrieData<I, P
     Deque<E> path = new ArrayDeque<>();
     while (currentNode != null && currentNode.getParentEdge() != null) {
       path.push(currentNode.getParentEdge());
+      //noinspection unchecked
       currentNode = currentNode.getParentEdge().getParent();
     }
 
@@ -74,9 +76,10 @@ public abstract class AbstractRadixTrieNode<D extends AbstractRadixTrieData<I, P
     if (this.getParentEdge() == null) {
       return new String[0];
     } else {
-      Stream<String> parent = Arrays.stream(this.getParentEdge().getParent().getPathFromRoot());
-      Stream<String> last = Stream.of(this.getParentEdge().getLabel());
-      return Stream.concat(parent, last).toArray(String[]::new);
+      String[] parent = this.getParentEdge().getParent().getPathFromRoot();
+      String[] last = this.getParentEdge().getLabel();
+
+      return ObjectArrays.concat(parent, last, String.class);
     }
   }
 }

@@ -1,6 +1,5 @@
 package de.skuld.util;
 
-import de.skuld.prng.JavaRandom;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -13,7 +12,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Random;
-import java.util.stream.IntStream;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -66,7 +64,7 @@ public class WrappedArrayTest {
 
       System.out.println("validity:");
       for (int i = 0; i < 10; i++) {
-        BytePrinter.printBytesAsHex(wrappedArray.get(wrappedArray.getIndexArray()[i]));
+        ByteHexUtil.printBytesAsHex(wrappedArray.get(wrappedArray.getIndexArray()[i]));
       }
     } catch (IOException e) {
       e.printStackTrace();
@@ -95,7 +93,7 @@ public class WrappedArrayTest {
         buffers[i].putInt(0);
         buffers[i].putInt(r.nextInt());
       }
-      BytePrinter.printBytesAsHex(inArray);
+      ByteHexUtil.printBytesAsHex(inArray);
     }
       WrappedByteBuffers wrappedByteArray = new WrappedByteBuffers(buffers, chunkSize, mbbAmount * amount, compareSize);
 
@@ -106,11 +104,11 @@ public class WrappedArrayTest {
 
       System.out.println("array raw:");
       for (int i = 0; i < amount*mbbAmount; i++) {
-        BytePrinter.printBytesAsHex(wrappedByteArray.get(i));
+        ByteHexUtil.printBytesAsHex(wrappedByteArray.get(i));
       }
     System.out.println("array sorted");
     for (int i = 0; i < amount*mbbAmount; i++) {
-      BytePrinter.printBytesAsHex(wrappedByteArray.get(wrappedByteArray.getIndexArray()[i]));
+      ByteHexUtil.printBytesAsHex(wrappedByteArray.get(wrappedByteArray.getIndexArray()[i]));
     }
   }
 

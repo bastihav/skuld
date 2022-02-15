@@ -1,6 +1,8 @@
 package de.skuld.util;
 
-public class BytePrinter {
+import javax.xml.bind.DatatypeConverter;
+
+public class ByteHexUtil {
 
   public static String bytesToHex(byte[] bytes) {
     StringBuilder sb = new StringBuilder();
@@ -17,5 +19,9 @@ public class BytePrinter {
 
   public static void printBytesAsHex(byte[] bytes) {
     System.out.println(bytesToHex(bytes));
+  }
+
+  public static byte[] hexToByte(String hex) {
+    return DatatypeConverter.parseHexBinary(hex);
   }
 }

@@ -1,3 +1,4 @@
 [submodule "Java-PRNG"]
 	path = Java-PRNG
 	url = https://github.com/bastihav/Java-PRNG
+  branch = main

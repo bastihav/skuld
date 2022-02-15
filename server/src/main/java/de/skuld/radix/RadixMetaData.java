@@ -14,6 +14,10 @@ public class RadixMetaData {
     this.status = status;
   }
 
+  public RadixMetaData() {
+
+  }
+
   public UUID getId() {
     return id;
   }
