@@ -14,7 +14,9 @@ public class JavaRandomSolverTest extends AbstractSolverTest {
     @Override
     protected byte[] getSolverInput(long seed) {
         PRNG prng = new JavaRandom(seed);
-        return prng.getRandomBytes(Integer.BYTES * 4);
+        byte[] array = new byte[Integer.BYTES * 4];
+        prng.nextBytes(array);
+        return array;
     }
 
     @Override

@@ -19,6 +19,37 @@ public class MemoryRadixTrie extends
   }
 
   @Override
+  public void delete() {
+
+  }
+
+  @Override
+  public void serializeMetaData() {
+    // TODO
+  }
+
+  @Override
+  public void generate() {
+    // TODO
+  }
+
+  @Override
+  public boolean checkDiscardedIndexingData(RandomnessRadixTrieDataPoint dataPoint,
+      byte[] discardedIndexingData) {
+    return false;
+  }
+
+  @Override
+  public byte[] shiftIndexingData(byte[] indexingData, int offset) {
+    return new byte[0];
+  }
+
+  @Override
+  public byte[] getDiscardedIndexingData(byte[] indexingData, int offset) {
+    return new byte[0];
+  }
+
+  @Override
   public @NotNull StringRadixTrieEdge createEdge(String[] label,
       @NotNull MemoryRadixTrieNode parentNode) {
     StringRadixTrieEdge edge = new StringRadixTrieEdge(label);

@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.Optional;
 
-public interface RadixTrieNode<D extends AbstractRadixTrieData, E extends RadixTrieEdge<D, ? extends RadixTrieNode<D, E>>> {
+public interface RadixTrieNode<D extends AbstractRadixTrieData<?,?>, E extends RadixTrieEdge<D, ? extends RadixTrieNode<D, E>>> {
 
   boolean mergeNodes(RadixTrieNode<D, E> other);
 
@@ -26,8 +26,10 @@ public interface RadixTrieNode<D extends AbstractRadixTrieData, E extends RadixT
 
   Optional<E> getOutgoingEdge(String label);
 
+  @SuppressWarnings("UnusedReturnValue")
   boolean removeEdge(E edge);
 
+  @SuppressWarnings("UnusedReturnValue")
   boolean addOutgoingEdge(E edge);
 
   E getParentEdge();

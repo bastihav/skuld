@@ -1,6 +1,12 @@
 package de.skuld.util;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,9 +26,19 @@ public class ConfigurationHelper {
 
   public static void loadDefaultConfig() {
     try {
-      loadConfig(new File(Objects.requireNonNull(
-          ConfigurationHelper.class.getClassLoader().getResource("config.properties")).toURI()));
-    } catch (URISyntaxException | ConfigurationException e) {
+      InputStream stream = ConfigurationHelper.class.getClassLoader().getResourceAsStream("config.properties");
+      File f = File.createTempFile("skuld", "config");
+      PrintWriter printWriter = new PrintWriter(f);
+      InputStreamReader inputStreamReader = new InputStreamReader(stream);
+      BufferedReader reader = new BufferedReader(inputStreamReader);
+
+      printWriter.flush();
+      loadConfig(f);
+
+      while (reader.ready()) {
+        printWriter.println(reader.readLine());
+      }
+    } catch (IOException | ConfigurationException e) {
       e.printStackTrace();
     }
   }
@@ -53,7 +69,7 @@ public class ConfigurationHelper {
       }
     }
 
-    try {
+    /*try {
       config = builder.getConfiguration();
 
       // Load external configuration file
@@ -75,7 +91,7 @@ public class ConfigurationHelper {
       }
     } catch (ConfigurationException e) {
       e.printStackTrace();
-    }
+    }*/
   }
 
   public static Configuration getConfig() {

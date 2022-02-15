@@ -1,13 +1,20 @@
 plugins {
+    id 'org.springframework.boot' version '2.6.3'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'application'
     id 'java'
     id 'jacoco'
 }
 
-project.sourceCompatibility = '11'
-project.targetCompatibility = '11'
+/*project.sourceCompatibility = '11'
+project.targetCompatibility = '11'*/
 
 group 'de.skuld'
 version '1.0-SNAPSHOT'
+
+application {
+    mainClass = 'de.skuld.web.Swagger2SpringBoot'
+}
 
 repositories {
     mavenCentral()
@@ -38,6 +45,7 @@ task cleanTestData(type: Delete) {
 test {
     systemProperty "java.library.path", "C:\\Users\\basti\\Downloads\\z3-4.8.14-x64-win\\z3-4.8.14-x64-win\\bin"
     //dependsOn(generateTestData)
+    maxHeapSize = "20G"
     useJUnitPlatform()
     //finalizedBy cleanTestData
 }
@@ -47,19 +55,20 @@ jacocoTestReport {
 }
 
 dependencies {
-    implementation 'org.jetbrains:annotations:23.0.0'
+    implementation project(':Java-PRNG')
+    implementation 'org.jetbrains:annotations:16.0.2'
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.12.0'
+    implementation group: 'commons-io', name: 'commons-io', version: '2.11.0'
     implementation group: 'org.apache.commons', name: 'commons-configuration2', version: '2.7'
-    implementation group: 'org.apache.commons', name: 'commons-math3', version: '3.6.1'
     implementation group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.4'
 
+    implementation 'com.google.code.gson:gson:2.8.9'
+    implementation group: 'com.github.f4b6a3', name: 'uuid-creator', version: '4.3.1'
     // java solver
     implementation 'com.github.rayferric:regen:1.0.1'
-
     // z3 solver
     implementation files('lib/com.microsoft.z3.jar')
-    runtime group: 'com.microsoft.z3', name: 'libz3.java.win', version: '4.8.8'
-
+    //runtime group: 'com.microsoft.z3', name: 'libz3.java.win', version: '4.8.8'
 
     implementation("com.google.guava:guava:31.0.1-jre")
 
@@ -70,6 +79,19 @@ dependencies {
     implementation group:"com.fasterxml.jackson.core", name:"jackson-databind", version:'2.13.1'
     implementation group:"com.fasterxml.jackson.core", name:"jackson-annotations", version:'2.13.1'
 
+    implementation group: 'io.springfox', name: 'springfox-oas', version: '3.0.0'
+    implementation group: 'io.springfox', name: 'springfox-swagger-ui', version: '3.0.0'
+    implementation "io.springfox:springfox-boot-starter:3.0.0"
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation('org.springframework.boot:spring-boot-starter-web')
+    implementation('org.springframework.boot:spring-boot-starter-tomcat')
+    implementation group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
+    implementation group: 'org.springframework.plugin', name: 'spring-plugin-core', version: '2.0.0.RELEASE'
+    implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
+    implementation group: 'com.github.joschi.jackson', name: 'jackson-datatype-threetenbp', version: '2.13.0-rc2'
+
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
 }
