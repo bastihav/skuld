@@ -2,6 +2,8 @@ package de.skuld.web.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.primitives.Longs;
+import de.skuld.prng.JavaRandom;
+import de.skuld.processors.CBCIVPreProcessor;
 import de.skuld.processors.TLSRandomPreProcessor;
 import de.skuld.radix.RadixTrie;
 import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
@@ -10,12 +12,18 @@ import de.skuld.radix.disk.DiskBasedRadixTrieNode;
 import de.skuld.radix.disk.DiskBasedRandomnessRadixTrieData;
 import de.skuld.radix.disk.PathRadixTrieEdge;
 import de.skuld.radix.manager.RadixManager;
+import de.skuld.solvers.JavaRandomSolver;
 import de.skuld.solvers.Solver;
+import de.skuld.solvers.XoShiRo128StarStarSolver;
+import de.skuld.util.AnalysisUtil;
+import de.skuld.util.ArrayUtil;
 import de.skuld.util.ByteHexUtil;
 import de.skuld.util.ConfigurationHelper;
 import de.skuld.web.model.RandomnessQuery;
-import de.skuld.web.model.RandomnessQuery.TypeEnum;
+import de.skuld.web.model.RandomnessQueryInner;
+import de.skuld.web.model.RandomnessQueryInner.TypeEnum;
 import de.skuld.web.model.Result;
+import de.skuld.web.model.ResultPairs;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.processing.Generated;
 import javax.servlet.http.HttpServletRequest;
@@ -48,22 +57,21 @@ public class RandomnessApiController implements RandomnessApi {
 
     private final RadixManager<DiskBasedRadixTrie> radixManager;
     private final TLSRandomPreProcessor tlsRandomPreProcessor = new TLSRandomPreProcessor();
+    private final CBCIVPreProcessor cbcivPreProcessor = new CBCIVPreProcessor();
 
     @Autowired
     public RandomnessApiController(ObjectMapper objectMapper, HttpServletRequest request) {
         this.objectMapper = objectMapper;
         this.request = request;
 
-        this.radixManager = new RadixManager(Paths.get(ConfigurationHelper.getConfig().getString("radix.root")));
+        this.radixManager = RadixManager.getInstance(Paths.get(ConfigurationHelper.getConfig().getString("radix.root")));
 
     }
 
     public ResponseEntity<Result> analyzeRandomness(@Parameter(in = ParameterIn.DEFAULT, description = "randomness to be analyzed", required=true, schema=@Schema()) @Valid @RequestBody RandomnessQuery body) {
         String accept = request.getHeader("Accept");
         if (accept != null && (accept.contains("application/json") || accept.contains("*/*"))) {
-            System.out.println("body: ");
-            body.getRandomness().forEach(ar -> ByteHexUtil.printBytesAsHex(ar));
-            System.out.println("--");
+
             return new ResponseEntity<Result>(getAnalysisResult(body), HttpStatus.OK);
         }
 
@@ -71,61 +79,30 @@ public class RandomnessApiController implements RandomnessApi {
     }
 
     private Result getAnalysisResult(RandomnessQuery query) {
+        // TODO add time keeping!
+
         Result result = new Result();
 
         List<byte[]> randomness;
-        if (query.getType() == TypeEnum.TLS_CLIENT_RANDOM || query.getType() == TypeEnum.TLS_SERVER_RANDOM) {
-            randomness = tlsRandomPreProcessor.preprocess(result, query.getRandomness());
-        } else {
-            randomness = query.getRandomness();
-        }
+        // PreProcessors set TLS tests (all zero IV, etc..)
+        DiskBasedRadixTrie radixTrie = radixManager.getTrie();
+        //DiskBasedRadixTrie radixTrie = radixManager.getTries().values().stream().findFirst().get();
 
-        System.out.println("after preprocessing: ");
-        randomness.forEach(ar -> ByteHexUtil.printBytesAsHex(ar));
-        System.out.println("--");
-
-        // TODO uncomment
-        //DiskBasedRadixTrie radixTrie = radixManager.getTrie();
-        DiskBasedRadixTrie radixTrie = radixManager.getTries().values().stream().findFirst().get();
-
-        List<RandomnessRadixTrieDataPoint> dp = new ArrayList<>(randomness.size());
-
-        for (byte[] arr : randomness) {
-           radixTrie.search(arr).ifPresent(dp::add);
-        }
-
-        boolean sameSeeds = dp.stream().map(p -> p.getSeedIndex()).distinct().count() == 1;
-        boolean sameRNG =  dp.stream().map(p -> p.getRng()).distinct().count() == 1;
-
-        // we need to find datapoints for all randomness
-        if (sameSeeds && sameRNG && dp.size() == randomness.size()) {
-            long current = -1;
-
-            for (RandomnessRadixTrieDataPoint p : dp) {
-                long seedIndex = p.getSeedIndex();
-                if (seedIndex > current) {
-                    current = seedIndex;
-                } else {
-                    current = Long.MAX_VALUE;
-                    break;
-                }
+        for (RandomnessQueryInner randomnessQueryInner : query) {
+            if (randomnessQueryInner.getType() == TypeEnum.TLS_CLIENT_RANDOM || randomnessQueryInner.getType() == TypeEnum.TLS_SERVER_RANDOM) {
+                randomness = tlsRandomPreProcessor.preprocess(result, randomnessQueryInner.getRandomness());
+            } else if(randomnessQueryInner.getType() == TypeEnum.CBC_IV) {
+                randomness = cbcivPreProcessor.preprocess(result, randomnessQueryInner.getRandomness());
+            } else {
+                randomness = randomnessQueryInner.getRandomness();
             }
 
-            if (current != Long.MAX_VALUE) {
-                // increasing seed indices! This is a match!
-                result.setPrng(dp.get(0).getRng().toString());
-                result.setSeed(
-                    Longs.toByteArray(radixTrie.getSeedMap().get(dp.get(0).getSeedIndex())));
+            if (radixTrie != null) {
+                AnalysisUtil.analyzeWithPrecomputations(radixTrie, randomness, result, randomnessQueryInner.getType());
             }
-        } else {
-            result.setSeed(null);
-            result.setPrng(null);
+
+            AnalysisUtil.analyzeWithSolvers(randomness, result, randomnessQueryInner.getType());
         }
-
-        // TODO statistical tests
-        // TODO solvers
-
-
         return result;
     }
 }

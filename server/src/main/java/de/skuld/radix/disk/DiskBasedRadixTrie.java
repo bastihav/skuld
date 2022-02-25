@@ -164,7 +164,19 @@ public class DiskBasedRadixTrie extends
   @Override
   public void delete() {
     try {
-      FileUtils.deleteDirectory(this.getRoot().getPath().toFile());
+      boolean isWindows = System.getProperty("os.name")
+          .toLowerCase().startsWith("windows");
+
+      ProcessBuilder builder = new ProcessBuilder();
+      if (isWindows) {
+        builder.command("cmd.exe", "/c", "rmdir", "/s", "/q", "\""+getRoot().getPath().toString()+"\"");
+        System.out.println(builder.command());
+      } else {
+        builder.command("sh", "-c", "rm", "-rf", "\""+getRoot().getPath().toString()+"\"");
+      }
+      builder.directory(new File(System.getProperty("user.home")));
+      builder.inheritIO();
+      Process process = builder.start();
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -459,6 +471,7 @@ public class DiskBasedRadixTrie extends
         pong = System.nanoTime();
         System.out.println("hardware cache " + bite + " sorted in " + (pong-ping) + " ns");
 
+        // TODO maybe do this in parallel?
         collapseCacheAndAdd(wrappedArray, elementCount);
 
         Arrays.stream(buffers).forEach(DiskBasedRadixTrie::closeDirectBuffer);
@@ -489,6 +502,7 @@ public class DiskBasedRadixTrie extends
       byte[] dataPoint = wrappedArray.get(sortedIndex);
       int lastIndex = CacheUtil.lastIndexOf(sortedIndices, Arrays.copyOfRange(dataPoint, 0, maxHeight), wrappedArray, index, elementCount);
 
+
       DiskBasedRandomnessRadixTrieData data = new DiskBasedRandomnessRadixTrieData(this, wrappedArray, index, lastIndex);
 
       long pong1 = System.nanoTime();
@@ -498,6 +512,7 @@ public class DiskBasedRadixTrie extends
       ping1 = System.nanoTime();
       byte[] indexingData = new RandomnessRadixTrieDataPoint(dataPoint, remainingOnDisk).getRemainingIndexingData();
 
+      // TODO or do this in parallel? this is the direct writing
       this.add(data, indexingData);
       pong1 = System.nanoTime();
       System.out.println("added [" + index + " , " + lastIndex + "] in " + (pong1 - ping1) +" ns");

@@ -73,12 +73,18 @@ public class RadixUpdaterThread<T extends RadixTrie<?,?,?,?,?>> extends Thread {
 
           System.out.println("creating new radix trie!");
           UUID newUuid = radixManager.createNewDiskBasedRadixTrie(new Date(d.getTime() + unixTime*1000L));
-          // todo do this in another thread
-          System.out.println("now generating new trie!");
-          radixManager.generateTrie(newUuid);
-          System.out.println("created new trie");
 
-          // TODO can now sleep until a known point in time
+          System.out.println("now generating new trie!");
+          Thread creatorThread = new Thread(() -> {
+            radixManager.generateTrie(newUuid);
+            System.out.println("created new trie");
+          });
+          creatorThread.start();
+          try {
+            Thread.sleep(500);
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
         }
       }
 

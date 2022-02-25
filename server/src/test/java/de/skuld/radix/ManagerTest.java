@@ -18,7 +18,7 @@ public class ManagerTest {
   @Test
   //@Disabled
   public void test() {
-    RadixManager<DiskBasedRadixTrie> radixManager = new RadixManager<>(Paths.get("G:\\skuld\\"));
+    RadixManager<DiskBasedRadixTrie> radixManager = RadixManager.getInstance(Paths.get("G:\\skuld\\"));
     UUID uuid = radixManager.createNewDiskBasedRadixTrie();
     //radixManager.addAllTries();
     radixManager.generateTrie(uuid);
@@ -32,7 +32,7 @@ public class ManagerTest {
 
   @Test
   public void readPerformanceTestSearchAlgorithm() throws IOException {
-    RadixManager<DiskBasedRadixTrie> radixManager = new RadixManager<>(Paths.get("G:\\skuld\\"));
+    RadixManager<DiskBasedRadixTrie> radixManager = RadixManager.getInstance(Paths.get("G:\\skuld\\"));
     UUID uuid = radixManager.createNewDiskBasedRadixTrie();
     //radixManager.addAllTries();
     radixManager.generateTrie(uuid);

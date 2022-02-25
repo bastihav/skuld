@@ -1,10 +1,8 @@
 package de.skuld.web.model;
 
-import de.skuld.web.model.ResultTests;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,153 +14,67 @@ import javax.validation.constraints.*;
  * Result
  */
 @Validated
-@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-01-28T09:31:31.211Z[GMT]")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-02-22T14:08:42.430Z[GMT]")
 
 
 public class Result   {
-  @JsonProperty("seed")
-  private byte[] seed = null;
+  @JsonProperty("pairs")
+  @Valid
+  private List<ResultPairs> pairs = null;
 
-  @JsonProperty("prng")
-  private String prng = null;
+  @JsonProperty("tlsTests")
+  private ResultTlsTests tlsTests = null;
 
-  @JsonProperty("unixtime")
-  private Boolean unixtime = false;
+  public Result pairs(List<ResultPairs> pairs) {
+    this.pairs = pairs;
+    return this;
+  }
 
-  /**
-   * Gets or Sets fallbackProtection
-   */
-  public enum FallbackProtectionEnum {
-    _12("TLS_13_TO_TLS_12"),
-
-    _11("TLS_13_TO_TLS_11");
-
-    private final String value;
-
-    FallbackProtectionEnum(String value) {
-      this.value = value;
+  public Result addPairsItem(ResultPairs pairsItem) {
+    if (this.pairs == null) {
+      this.pairs = new ArrayList<ResultPairs>();
     }
-
-    @Override
-    @JsonValue
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static FallbackProtectionEnum fromValue(String text) {
-      for (FallbackProtectionEnum b : FallbackProtectionEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
-          return b;
-        }
-      }
-      return null;
-    }
-  }
-  @JsonProperty("fallbackProtection")
-  private FallbackProtectionEnum fallbackProtection = null;
-
-  @JsonProperty("helloRetry")
-  private Boolean helloRetry = false;
-
-  public Result seed(byte[] seed) {
-    this.seed = seed;
+    this.pairs.add(pairsItem);
     return this;
   }
 
   /**
-   * Get seed
-   * @return seed
+   * Get pairs
+   * @return pairs
    **/
   @Schema(description = "")
-
-  public byte[] getSeed() {
-    return seed;
+      @Valid
+    public List<ResultPairs> getPairs() {
+    return pairs;
   }
 
-  public void setSeed(byte[] seed) {
-    this.seed = seed;
+  public void setPairs(List<ResultPairs> pairs) {
+    this.pairs = pairs;
   }
 
-  public Result prng(String prng) {
-    this.prng = prng;
+  public Result tlsTests(ResultTlsTests tlsTests) {
+    this.tlsTests = tlsTests;
     return this;
   }
 
   /**
-   * Get prng
-   * @return prng
+   * Get tlsTests
+   * @return tlsTests
    **/
   @Schema(description = "")
-
-  public String getPrng() {
-    return prng;
+  
+    @Valid
+    public ResultTlsTests getTlsTests() {
+    return tlsTests;
   }
 
-  public void setPrng(String prng) {
-    this.prng = prng;
-  }
-
-  public Result unixtime(Boolean unixtime) {
-    this.unixtime = unixtime;
-    return this;
-  }
-
-  /**
-   * Get unixtime
-   * @return unixtime
-   **/
-  @Schema(description = "")
-
-  public Boolean isUnixtime() {
-    return unixtime;
-  }
-
-  public void setUnixtime(Boolean unixtime) {
-    this.unixtime = unixtime;
-  }
-
-  public Result fallbackProtection(FallbackProtectionEnum fallbackProtection) {
-    this.fallbackProtection = fallbackProtection;
-    return this;
-  }
-
-  /**
-   * Get fallbackProtection
-   * @return fallbackProtection
-   **/
-  @Schema(description = "")
-
-  public FallbackProtectionEnum getFallbackProtection() {
-    return fallbackProtection;
-  }
-
-  public void setFallbackProtection(FallbackProtectionEnum fallbackProtection) {
-    this.fallbackProtection = fallbackProtection;
-  }
-
-  public Result helloRetry(Boolean helloRetry) {
-    this.helloRetry = helloRetry;
-    return this;
-  }
-
-  /**
-   * Get helloRetry
-   * @return helloRetry
-   **/
-  @Schema(description = "")
-
-  public Boolean isHelloRetry() {
-    return helloRetry;
-  }
-
-  public void setHelloRetry(Boolean helloRetry) {
-    this.helloRetry = helloRetry;
+  public void setTlsTests(ResultTlsTests tlsTests) {
+    this.tlsTests = tlsTests;
   }
 
 
   @Override
-  public boolean equals(java.lang.Object o) {
+  public boolean equals(Object o) {
     if (this == o) {
       return true;
     }
@@ -170,27 +82,22 @@ public class Result   {
       return false;
     }
     Result result = (Result) o;
-    return
-        Objects.equals(this.seed, result.seed) &&
-        Objects.equals(this.unixtime, result.unixtime) &&
-        Objects.equals(this.fallbackProtection, result.fallbackProtection) &&
-        Objects.equals(this.helloRetry, result.helloRetry);
+    return Objects.equals(this.pairs, result.pairs) &&
+        Objects.equals(this.tlsTests, result.tlsTests);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash( seed, unixtime, fallbackProtection, helloRetry);
+    return Objects.hash(pairs, tlsTests);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class Result {\n");
-
-    sb.append("    seed: ").append(toIndentedString(seed)).append("\n");
-    sb.append("    unixtime: ").append(toIndentedString(unixtime)).append("\n");
-    sb.append("    fallbackProtection: ").append(toIndentedString(fallbackProtection)).append("\n");
-    sb.append("    helloRetry: ").append(toIndentedString(helloRetry)).append("\n");
+    
+    sb.append("    pairs: ").append(toIndentedString(pairs)).append("\n");
+    sb.append("    tlsTests: ").append(toIndentedString(tlsTests)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -199,7 +106,7 @@ public class Result   {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(java.lang.Object o) {
+  private String toIndentedString(Object o) {
     if (o == null) {
       return "null";
     }

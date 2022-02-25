@@ -1,5 +1,10 @@
 package de.skuld.radix;
 
+import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
+import de.skuld.web.model.MetaData;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 
@@ -12,6 +17,18 @@ public class RadixMetaData {
     this.id = id;
     this.date = date;
     this.status = status;
+  }
+
+  public RadixMetaData(MetaData metaData) {
+    this(UUID.fromString(metaData.getUuid()), Date.from(Instant.parse(metaData.getDate())), RadixTrieStatus.valueOf(metaData.getStatus()));
+  }
+
+  public MetaData toAPIMetaData() {
+    MetaData metaData = new MetaData();
+    metaData.setDate(date.toInstant().toString());
+    metaData.setUuid(id.toString());
+    metaData.setStatus(RadixTrieStatus.toAPIStatus(status));
+    return metaData;
   }
 
   public RadixMetaData() {
@@ -41,4 +58,5 @@ public class RadixMetaData {
   public void setStatus(RadixTrieStatus status) {
     this.status = status;
   }
+
 }

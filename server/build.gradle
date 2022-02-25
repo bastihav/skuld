@@ -66,9 +66,6 @@ dependencies {
     implementation group: 'com.github.f4b6a3', name: 'uuid-creator', version: '4.3.1'
     // java solver
     implementation 'com.github.rayferric:regen:1.0.1'
-    // z3 solver
-    implementation files('lib/com.microsoft.z3.jar')
-    //runtime group: 'com.microsoft.z3', name: 'libz3.java.win', version: '4.8.8'
 
     implementation("com.google.guava:guava:31.0.1-jre")
 

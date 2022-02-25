@@ -1,5 +1,11 @@
 package de.skuld.solvers;
 
+import de.skuld.prng.ImplementedPRNGs;
+import de.skuld.prng.JavaRandom;
+import de.skuld.prng.PRNG;
+import de.skuld.util.ArrayUtil;
+import java.util.List;
+
 public interface Solver {
 
   /**
@@ -14,7 +20,7 @@ public interface Solver {
    *
    * @return possible seeds, can be empty
    */
-  long[] solve(byte[] input);
+  List<byte[]> solve(byte[] input);
 
   /**
    * Return whether the amount of randomness is sufficient to attempt to solve the prng
@@ -25,4 +31,36 @@ public interface Solver {
   default boolean solveable(byte[] input) {
     return input != null && input.length > getConsecutiveBitsNeeded();
   }
+
+  /**
+   * Verifies whether the PRNG will generate all those randoms in that order (not necessarily consecutively) using the seed
+   * @param randoms
+   * @param seed
+   * @return
+   */
+  default boolean verify(List<byte[]> randoms, byte[] seed) {
+    PRNG random = getPrngImpl(seed);
+    // TODO config
+    byte[] someBytes = new byte[4096];
+    random.nextBytes(someBytes);
+    int currentIndex = -1;
+    for (byte[] bytes : randoms) {
+      int index = ArrayUtil.isSubArray(someBytes, bytes);
+      if (index > currentIndex) {
+        currentIndex = index;
+      } else {
+        currentIndex = Integer.MAX_VALUE;
+      }
+    }
+
+    return currentIndex > -1 && currentIndex < Integer.MAX_VALUE;
+  }
+
+  PRNG getPrngImpl(byte[] seed);
+
+  /**
+   * Gets the PRNG that this Solver solves
+   * @return
+   */
+  ImplementedPRNGs getPrng();
 }

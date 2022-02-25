@@ -32,8 +32,16 @@ public class RadixManager<R extends RadixTrie<?,?,?,?,?>> {
   private final Map<UUID, R> radixTries = new HashMap<>();
   private final Path rootPath;
   private RadixUpdaterThread<R> radixUpdaterThread;
+  private static final Map<Path, RadixManager<?>> instances = new HashMap<>();
 
-  public RadixManager(Path rootPath) {
+  public static <T extends RadixTrie<?,?,?,?,?>> RadixManager<T> getInstance(Path rootPath) {
+    instances.computeIfAbsent(rootPath, RadixManager::new);
+
+    //noinspection unchecked
+    return (RadixManager<T>) instances.get(rootPath);
+  }
+
+  private RadixManager(Path rootPath) {
     this.rootPath = rootPath;
     addAllTries();
   }
@@ -44,7 +52,6 @@ public class RadixManager<R extends RadixTrie<?,?,?,?,?>> {
 
   public void deleteRadixTrie(UUID uuid) {
     R trie = this.radixTries.remove(uuid);
-    // TODO do this in another thread and retry on failure
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (trie) {
       trie.delete();
@@ -92,13 +99,21 @@ public class RadixManager<R extends RadixTrie<?,?,?,?,?>> {
       this.radixUpdaterThread = new RadixUpdaterThread<>(this);
     }
 
-    this.radixUpdaterThread.start();
+    if (!radixUpdaterThread.isRunning())
+      this.radixUpdaterThread.start();
   }
 
   public void stopUpdaterThread() {
     if (this.radixUpdaterThread != null) {
       this.radixUpdaterThread.setRunning(false);
     }
+  }
+
+  public boolean isUpdaterThreadRunning() {
+    if (this.radixUpdaterThread == null) {
+      return false;
+    }
+    return this.radixUpdaterThread.isRunning();
   }
 
   public UUID createNewDiskBasedRadixTrie(Date date) {
@@ -136,7 +151,10 @@ public class RadixManager<R extends RadixTrie<?,?,?,?,?>> {
         return trie;
       }
     }
+    // TODO log this
+    //throw new RuntimeException("No current trie found");
 
-    throw new RuntimeException("No current trie found");
+    return getTries().values().stream().findFirst().orElse(null);
+
   }
 }
