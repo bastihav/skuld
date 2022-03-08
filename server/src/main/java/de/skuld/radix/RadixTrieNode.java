@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.Optional;
 
-public interface RadixTrieNode<D extends AbstractRadixTrieData<?,?>, E extends RadixTrieEdge<D, ? extends RadixTrieNode<D, E>>> {
+public interface RadixTrieNode<D extends AbstractRadixTrieData<?, ?>, E extends RadixTrieEdge<D, ? extends RadixTrieNode<D, E>>> {
 
   boolean mergeNodes(RadixTrieNode<D, E> other);
 

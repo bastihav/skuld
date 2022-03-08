@@ -13,25 +13,6 @@ import java.util.List;
 
 public class XoShiRo128StarStarSolver implements Solver {
 
-  @Override
-  public int getConsecutiveBitsNeeded() {
-    return Integer.SIZE * 4;
-  }
-
-  @Override
-  public List<byte[]> solve(byte[] input) {
-    ByteBuffer buffer = ByteBuffer.wrap(input).order(ByteOrder.LITTLE_ENDIAN);
-    int[] reconstructedState = reconstructState(new int[]{buffer.getInt(), buffer.getInt(), buffer.getInt(), buffer.getInt()});
-
-    ByteBuffer byteBuffer = ByteBuffer.allocate(reconstructedState.length * 4);
-    IntBuffer intBuffer = byteBuffer.asIntBuffer();
-    intBuffer.put(reconstructedState);
-
-    byte[] array = byteBuffer.array();
-
-    return Collections.singletonList(array);
-  }
-
   public static int[] reconstructState(int[] outputs) {
     int x0_0 = reverseF(outputs[0]); // x0_0
     int y1 = outputs[1]; // f(x0_0 ^ x3_0 ^ x1_0)
@@ -44,7 +25,7 @@ public class XoShiRo128StarStarSolver implements Solver {
     // create original state
     int x3_1 = x0_x3_x1 ^ x0_0; // x3_0 ^ x1_0
     int x3_x1shift = reverseF(y3) ^ x3_gx3x1_x2 ^ x0_0 ^ g(x3_gx3x1_x2 ^ x0_x3_x1);
-    int x1_0 = bruteForceX1_0(x3_1, x3_x1shift) ;
+    int x1_0 = bruteForceX1_0(x3_1, x3_x1shift);
     int x3_0 = x3_1 ^ x1_0;
     int x2_0 = x3_gx3x1_x2 ^ g(x3_1) ^ x3_0;
 
@@ -53,7 +34,8 @@ public class XoShiRo128StarStarSolver implements Solver {
 
   /**
    * Bruteforces x1_0 such that x1_0 ^ (x1<<9) == x3_x1 ^  x1_0 ^ (x1<<9) == x3_x1shift
-   * @param x3_x1 given from oracle
+   *
+   * @param x3_x1      given from oracle
    * @param x3_x1shift given from oracle
    * @return x1_0 or 0 if it wasn't found
    */
@@ -75,12 +57,10 @@ public class XoShiRo128StarStarSolver implements Solver {
   }
 
   public static int reverseF(int n) {
-    return conservativeDivision(Integer.rotateRight(conservativeDivision(n,9), 7),5);
+    return conservativeDivision(Integer.rotateRight(conservativeDivision(n, 9), 7), 5);
   }
 
   /**
-   *
-   *
    * @param number
    * @param divisor
    * @return
@@ -95,7 +75,7 @@ public class XoShiRo128StarStarSolver implements Solver {
 
     long l = numberInLong;
 
-    while(l % divisor != 0 && i <= 16) {
+    while (l % divisor != 0 && i <= 16) {
       long mask = i << (32 + LongMath.log2(i, RoundingMode.FLOOR));
       l = numberInLong | mask;
       i++;
@@ -109,6 +89,26 @@ public class XoShiRo128StarStarSolver implements Solver {
 
   public static int reverseG(int n) {
     return Integer.rotateRight(n, 11);
+  }
+
+  @Override
+  public int getConsecutiveBitsNeeded() {
+    return Integer.SIZE * 4;
+  }
+
+  @Override
+  public List<byte[]> solve(byte[] input) {
+    ByteBuffer buffer = ByteBuffer.wrap(input).order(ByteOrder.LITTLE_ENDIAN);
+    int[] reconstructedState = reconstructState(
+        new int[]{buffer.getInt(), buffer.getInt(), buffer.getInt(), buffer.getInt()});
+
+    ByteBuffer byteBuffer = ByteBuffer.allocate(reconstructedState.length * 4);
+    IntBuffer intBuffer = byteBuffer.asIntBuffer();
+    intBuffer.put(reconstructedState);
+
+    byte[] array = byteBuffer.array();
+
+    return Collections.singletonList(array);
   }
 
   @Override

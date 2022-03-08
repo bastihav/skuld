@@ -3,6 +3,7 @@ package de.skuld.util;
 import java.util.concurrent.RecursiveAction;
 
 public class ParallelMergeSort extends RecursiveAction {
+
   private static final int MAX = 1 << 13;
   private final WrappedByteBuffers buffers;
   private final int[] indexArray;
@@ -55,9 +56,8 @@ public class ParallelMergeSort extends RecursiveAction {
       current++;
     }
 
-    System.arraycopy(helper, helperLeft, indexArray, current, Math.max(0, mid-helperLeft+1));
+    System.arraycopy(helper, helperLeft, indexArray, current, Math.max(0, mid - helperLeft + 1));
   }
-
 
 
   private void mergeSort(int s, int e) {

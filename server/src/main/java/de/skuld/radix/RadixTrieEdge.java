@@ -1,6 +1,6 @@
 package de.skuld.radix;
 
-public interface RadixTrieEdge<D extends AbstractRadixTrieData<?,?>, N extends RadixTrieNode<D, ? extends RadixTrieEdge<D, N>>> {
+public interface RadixTrieEdge<D extends AbstractRadixTrieData<?, ?>, N extends RadixTrieNode<D, ? extends RadixTrieEdge<D, N>>> {
 
   /**
    * Method that returns whether this edge is a summary edge, i.e. can be split into multiple edges

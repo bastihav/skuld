@@ -15,8 +15,8 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-02-22T14:08:42.430Z[GMT]")
 
+public class ResultPairs {
 
-public class ResultPairs   {
   /**
    * Gets or Sets type
    */
@@ -38,11 +38,12 @@ public class ResultPairs   {
 
   /**
    * Get type
+   *
    * @return type
    **/
   @Schema(description = "")
-  
-    public TypeEnum getType() {
+
+  public TypeEnum getType() {
     return type;
   }
 
@@ -65,11 +66,12 @@ public class ResultPairs   {
 
   /**
    * Get seeds
+   *
    * @return seeds
    **/
   @Schema(description = "")
-  
-    public List<byte[]> getSeeds() {
+
+  public List<byte[]> getSeeds() {
     return seeds;
   }
 
@@ -84,11 +86,12 @@ public class ResultPairs   {
 
   /**
    * Get prng
+   *
    * @return prng
    **/
   @Schema(description = "")
-  
-    public String getPrng() {
+
+  public String getPrng() {
     return prng;
   }
 
@@ -120,7 +123,7 @@ public class ResultPairs   {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class ResultPairs {\n");
-    
+
     sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    seeds: ").append(toIndentedString(seeds)).append("\n");
     sb.append("    prng: ").append(toIndentedString(prng)).append("\n");
@@ -129,8 +132,8 @@ public class ResultPairs   {
   }
 
   /**
-   * Convert the given object to string with each line indented by 4 spaces
-   * (except the first line).
+   * Convert the given object to string with each line indented by 4 spaces (except the first
+   * line).
    */
   private String toIndentedString(Object o) {
     if (o == null) {

@@ -11,8 +11,8 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-02-22T13:22:34.185Z[GMT]")
 
+public class InlineResponse200 {
 
-public class InlineResponse200   {
   @JsonProperty("running")
   private Boolean running = null;
 
@@ -23,11 +23,12 @@ public class InlineResponse200   {
 
   /**
    * Get running
+   *
    * @return running
    **/
   @Schema(description = "")
-  
-    public Boolean isRunning() {
+
+  public Boolean isRunning() {
     return running;
   }
 
@@ -57,15 +58,15 @@ public class InlineResponse200   {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class InlineResponse200 {\n");
-    
+
     sb.append("    running: ").append(toIndentedString(running)).append("\n");
     sb.append("}");
     return sb.toString();
   }
 
   /**
-   * Convert the given object to string with each line indented by 4 spaces
-   * (except the first line).
+   * Convert the given object to string with each line indented by 4 spaces (except the first
+   * line).
    */
   private String toIndentedString(Object o) {
     if (o == null) {

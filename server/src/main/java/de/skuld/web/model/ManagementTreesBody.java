@@ -11,8 +11,8 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-02-22T13:22:34.185Z[GMT]")
 
+public class ManagementTreesBody {
 
-public class ManagementTreesBody   {
   @JsonProperty("date")
   private String date = null;
 
@@ -23,11 +23,12 @@ public class ManagementTreesBody   {
 
   /**
    * Get date
+   *
    * @return date
    **/
   @Schema(description = "")
-  
-    public String getDate() {
+
+  public String getDate() {
     return date;
   }
 
@@ -57,15 +58,15 @@ public class ManagementTreesBody   {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class ManagementTreesBody {\n");
-    
+
     sb.append("    date: ").append(toIndentedString(date)).append("\n");
     sb.append("}");
     return sb.toString();
   }
 
   /**
-   * Convert the given object to string with each line indented by 4 spaces
-   * (except the first line).
+   * Convert the given object to string with each line indented by 4 spaces (except the first
+   * line).
    */
   private String toIndentedString(Object o) {
     if (o == null) {

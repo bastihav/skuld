@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.UUID;
 
 public class RadixMetaData {
+
   private UUID id;
   private Date date;
   private RadixTrieStatus status;
@@ -17,7 +18,12 @@ public class RadixMetaData {
   }
 
   public RadixMetaData(MetaData metaData) {
-    this(UUID.fromString(metaData.getUuid()), Date.from(Instant.parse(metaData.getDate())), RadixTrieStatus.valueOf(metaData.getStatus()));
+    this(UUID.fromString(metaData.getUuid()), Date.from(Instant.parse(metaData.getDate())),
+        RadixTrieStatus.valueOf(metaData.getStatus()));
+  }
+
+  public RadixMetaData() {
+
   }
 
   @Override
@@ -35,10 +41,6 @@ public class RadixMetaData {
     metaData.setUuid(id.toString());
     metaData.setStatus(RadixTrieStatus.toAPIStatus(status));
     return metaData;
-  }
-
-  public RadixMetaData() {
-
   }
 
   public UUID getId() {

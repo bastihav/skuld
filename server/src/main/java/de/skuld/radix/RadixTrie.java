@@ -72,8 +72,8 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extend
   Optional<N> getNode(@NotNull I indexingData);
 
   /**
-   * Search for data point in trie.
-   * This implements a shifting search to account for different partition offsets
+   * Search for data point in trie. This implements a shifting search to account for different
+   * partition offsets
    *
    * @param indexingData indexing data
    * @return optional data point
@@ -134,6 +134,7 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extend
 
   /**
    * Gets the metadata of this trie
+   *
    * @return meta data
    */
   RadixMetaData getMetaData();
@@ -151,7 +152,7 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extend
   /**
    * Checks whether the trie contains discarded indexing data preceding the datapoint
    *
-   * @param dataPoint found dp
+   * @param dataPoint             found dp
    * @param discardedIndexingData indexing data to check preceding things for
    * @return whether the dp is correct for the original indexing data
    */
@@ -159,8 +160,9 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extend
 
   /**
    * Shift the indexing data offset-elements to the left
+   *
    * @param indexingData data to shift
-   * @param offset offset
+   * @param offset       offset
    * @return shifted indexing data
    */
   I shiftIndexingData(I indexingData, int offset);
@@ -169,7 +171,7 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extend
    * Get the discarded (shifted to the left) indexing data.
    *
    * @param indexingData data
-   * @param offset offset
+   * @param offset       offset
    * @return discarded indexing data
    */
   I getDiscardedIndexingData(I indexingData, int offset);

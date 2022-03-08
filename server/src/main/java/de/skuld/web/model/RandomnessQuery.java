@@ -10,8 +10,7 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-02-22T14:03:55.597Z[GMT]")
 
-
-public class RandomnessQuery extends ArrayList<RandomnessQueryInner>  {
+public class RandomnessQuery extends ArrayList<RandomnessQueryInner> {
 
   @Override
   public boolean equals(Object o) {
@@ -39,8 +38,8 @@ public class RandomnessQuery extends ArrayList<RandomnessQueryInner>  {
   }
 
   /**
-   * Convert the given object to string with each line indented by 4 spaces
-   * (except the first line).
+   * Convert the given object to string with each line indented by 4 spaces (except the first
+   * line).
    */
   private String toIndentedString(Object o) {
     if (o == null) {

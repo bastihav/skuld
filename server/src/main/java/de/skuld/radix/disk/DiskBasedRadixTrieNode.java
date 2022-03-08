@@ -88,7 +88,8 @@ public class DiskBasedRadixTrieNode extends
 
       long writeSize = (long) this.data.getElementCount() * sizeOnDisk;
 
-      MappedByteBuffer mappedByteBuffer = fileChannel.map(MapMode.READ_WRITE, readSizeInBytes, writeSize);
+      MappedByteBuffer mappedByteBuffer = fileChannel.map(MapMode.READ_WRITE, readSizeInBytes,
+          writeSize);
 
       this.data.serialize(mappedByteBuffer, 0);
     } catch (IOException e) {
@@ -160,7 +161,7 @@ public class DiskBasedRadixTrieNode extends
       String[] labels;
       // last fragment is the current edge we are interested in
       if (relevantFragments.length > 0) {
-         labels = relevantFragments[relevantFragments.length - 1].split("(?<=\\G..)");
+        labels = relevantFragments[relevantFragments.length - 1].split("(?<=\\G..)");
       } else {
         labels = new String[0];
       }
@@ -169,9 +170,10 @@ public class DiskBasedRadixTrieNode extends
 
       Path pathString;
       if (relevantFragments.length > 0) {
-        if (this.p.toString().endsWith(ConfigurationHelper.getConfig().getString("radix.leaf.file_name"))) {
+        if (this.p.toString()
+            .endsWith(ConfigurationHelper.getConfig().getString("radix.leaf.file_name"))) {
           pathString = this.getPath().getRoot().resolve(
-              this.p.subpath(0, this.p.getNameCount()-2));
+              this.p.subpath(0, this.p.getNameCount() - 2));
         } else {
           pathString = this.getPath().getRoot().resolve(
               this.p.subpath(0, this.p.getNameCount() - 1));
@@ -190,6 +192,11 @@ public class DiskBasedRadixTrieNode extends
     }
   }
 
+  @Override
+  public void setParentEdge(PathRadixTrieEdge parentEdge) {
+    this.parentEdge = parentEdge;
+  }
+
   private String removePathPrefix(Path path) {
     Path trieRootPath = this.trie.getRoot().getPath();
     if (trieRootPath.getNameCount() == path.getNameCount()) {
@@ -197,11 +204,6 @@ public class DiskBasedRadixTrieNode extends
     }
 
     return path.subpath(trieRootPath.getNameCount(), path.getNameCount()).toString();
-  }
-
-  @Override
-  public void setParentEdge(PathRadixTrieEdge parentEdge) {
-    this.parentEdge = parentEdge;
   }
 
 }

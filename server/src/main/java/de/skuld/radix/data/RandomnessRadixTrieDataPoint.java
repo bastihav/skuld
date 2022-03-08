@@ -29,7 +29,8 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
     this.byteIndexInRandomness = byteIndexInRandomness;
   }
 
-  public RandomnessRadixTrieDataPoint(byte[] serializedData, int remainingSize, int rngSize, int seedIndexSize, int byteIndexSize) {
+  public RandomnessRadixTrieDataPoint(byte[] serializedData, int remainingSize, int rngSize,
+      int seedIndexSize, int byteIndexSize) {
     this.buffers = null;
     this.remainingIndexingData = new byte[remainingSize];
     this.bufferIndex = -1;
@@ -67,9 +68,11 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
   @Override
   public byte[] getRemainingIndexingData() {
     if (buffers != null) {
-      int serializedRemainingSize = ConfigurationHelper.getConfig().getInt("radix.partition.serialized.remaining");
+      int serializedRemainingSize = ConfigurationHelper.getConfig()
+          .getInt("radix.partition.serialized.remaining");
 
-      return Arrays.copyOfRange(buffers.get(bufferIndex), remainingIndexingDataOffset, serializedRemainingSize - remainingIndexingDataOffset);
+      return Arrays.copyOfRange(buffers.get(bufferIndex), remainingIndexingDataOffset,
+          serializedRemainingSize - remainingIndexingDataOffset);
     }
     return super.getRemainingIndexingData();
   }
@@ -151,7 +154,8 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
     if (buffers != null) {
       byte[] array = buffers.get(bufferIndex);
 
-      writeBuffer.position(index).put(array, remainingIndexingDataOffset, array.length - remainingIndexingDataOffset);
+      writeBuffer.position(index)
+          .put(array, remainingIndexingDataOffset, array.length - remainingIndexingDataOffset);
     } else {
       byte[] remainingData = getRemainingIndexingData();
       writeBuffer.position(index);

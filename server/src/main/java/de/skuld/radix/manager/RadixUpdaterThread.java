@@ -11,8 +11,15 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class RadixUpdaterThread<T extends RadixTrie<?,?,?,?,?>> extends Thread {
+public class RadixUpdaterThread<T extends RadixTrie<?, ?, ?, ?, ?>> extends Thread {
+
   private final RadixManager<T> radixManager;
+  private volatile boolean running = false;
+
+  public RadixUpdaterThread(RadixManager<T> radixManager) {
+    this.setDaemon(true);
+    this.radixManager = radixManager;
+  }
 
   public boolean isRunning() {
     return running;
@@ -20,13 +27,6 @@ public class RadixUpdaterThread<T extends RadixTrie<?,?,?,?,?>> extends Thread {
 
   public void setRunning(boolean running) {
     this.running = running;
-  }
-
-  private volatile boolean running = false;
-
-  public RadixUpdaterThread(RadixManager<T> radixManager) {
-    this.setDaemon(true);
-    this.radixManager = radixManager;
   }
 
   @Override
@@ -66,7 +66,8 @@ public class RadixUpdaterThread<T extends RadixTrie<?,?,?,?,?>> extends Thread {
             continue;
           }
 
-          UUID newUuid = radixManager.createNewDiskBasedRadixTrie(new Date(d.getTime() + unixTime*1000L));
+          UUID newUuid = radixManager.createNewDiskBasedRadixTrie(
+              new Date(d.getTime() + unixTime * 1000L));
 
           Thread creatorThread = new Thread(() -> {
             radixManager.generateTrie(newUuid);

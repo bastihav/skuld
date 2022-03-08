@@ -8,13 +8,12 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.IntStream;
 import java.util.stream.LongStream;
-import org.apache.commons.lang3.ArrayUtils;
 
 public class SeedManager {
 
-  private static final int UNIX_TIME_TO_GENERATE = ConfigurationHelper.getConfig().getInt("radix.prng.unix");
+  private static final int UNIX_TIME_TO_GENERATE = ConfigurationHelper.getConfig()
+      .getInt("radix.prng.unix");
   private long[] seeds = null;
 
   public SeedManager() {
@@ -32,7 +31,8 @@ public class SeedManager {
       long[] badSeeds = badSeeds();
       long[] pids = processIds();
 
-      seeds =  Arrays.stream(Longs.concat(unixSeeds, defaultSeeds, badSeeds, pids)).distinct().toArray();
+      seeds = Arrays.stream(Longs.concat(unixSeeds, defaultSeeds, badSeeds, pids)).distinct()
+          .toArray();
     }
 
     return seeds;
@@ -40,7 +40,7 @@ public class SeedManager {
 
   public long[] processIds() {
     // 32 bit systems have default max pid of 2^15
-    return LongStream.rangeClosed(0, (int) Math.pow(2,15)).toArray();
+    return LongStream.rangeClosed(0, (int) Math.pow(2, 15)).toArray();
   }
 
   /**
@@ -49,7 +49,7 @@ public class SeedManager {
    * @return
    */
   private long[] badSeeds() {
-    return new long[]{0,1,2,3,4,5,6,7,8,9, Long.MAX_VALUE};
+    return new long[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, Long.MAX_VALUE};
   }
 
   /**
@@ -78,8 +78,9 @@ public class SeedManager {
 
     prngs.forEach(prng -> {
       try {
-        seeds.add(prng.getConstructor(long.class).newInstance(Long.MAX_VALUE).usesUnixTimeAsDefault() ? 0
-            : prng.getConstructor(long.class).newInstance(Long.MAX_VALUE).getDefaultSeed());
+        seeds.add(
+            prng.getConstructor(long.class).newInstance(Long.MAX_VALUE).usesUnixTimeAsDefault() ? 0
+                : prng.getConstructor(long.class).newInstance(Long.MAX_VALUE).getDefaultSeed());
       } catch (Exception e) {
         e.printStackTrace();
       }

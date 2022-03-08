@@ -22,26 +22,25 @@ import org.apache.logging.log4j.Logger;
  * <p>
  * Example: Leaves store meta-information on randomness, i.e. seed and algorithm Their position is
  * based on the randomness, which is a byte array
- *
  */
-public class RadixManager<R extends RadixTrie<?,?,?,?,?>> {
+public class RadixManager<R extends RadixTrie<?, ?, ?, ?, ?>> {
 
   private static final Logger LOGGER = LogManager.getLogger();
+  private static final Map<Path, RadixManager<?>> instances = new HashMap<>();
   private final Map<UUID, R> radixTries = new HashMap<>();
   private final Path rootPath;
   private RadixUpdaterThread<R> radixUpdaterThread;
-  private static final Map<Path, RadixManager<?>> instances = new HashMap<>();
-
-  public static <T extends RadixTrie<?,?,?,?,?>> RadixManager<T> getInstance(Path rootPath) {
-    instances.computeIfAbsent(rootPath, RadixManager::new);
-
-    //noinspection unchecked
-    return (RadixManager<T>) instances.get(rootPath);
-  }
 
   private RadixManager(Path rootPath) {
     this.rootPath = rootPath;
     addAllTries();
+  }
+
+  public static <T extends RadixTrie<?, ?, ?, ?, ?>> RadixManager<T> getInstance(Path rootPath) {
+    instances.computeIfAbsent(rootPath, RadixManager::new);
+
+    //noinspection unchecked
+    return (RadixManager<T>) instances.get(rootPath);
   }
 
   public void addRadixTrie(R trie) {
@@ -98,9 +97,10 @@ public class RadixManager<R extends RadixTrie<?,?,?,?,?>> {
 
               ProcessBuilder builder = new ProcessBuilder();
               if (isWindows) {
-                builder.command("cmd.exe", "/c", "rmdir", "/s", "/q", "\""+rootPath.resolve(dirName).toString()+"\"");
+                builder.command("cmd.exe", "/c", "rmdir", "/s", "/q",
+                    "\"" + rootPath.resolve(dirName).toString() + "\"");
               } else {
-                builder.command("sh", "-c", "rm -rf " +rootPath.resolve(dirName).toString());
+                builder.command("sh", "-c", "rm -rf " + rootPath.resolve(dirName).toString());
               }
               builder.directory(new File(System.getProperty("user.home")));
               builder.redirectOutput(Redirect.DISCARD);
@@ -126,8 +126,9 @@ public class RadixManager<R extends RadixTrie<?,?,?,?,?>> {
       this.radixUpdaterThread = new RadixUpdaterThread<>(this);
     }
 
-    if (!radixUpdaterThread.isRunning())
+    if (!radixUpdaterThread.isRunning()) {
       this.radixUpdaterThread.start();
+    }
   }
 
   public void stopUpdaterThread() {
@@ -163,6 +164,7 @@ public class RadixManager<R extends RadixTrie<?,?,?,?,?>> {
 
   /**
    * Returns the trie that is relevant to searching at this moment
+   *
    * @return
    */
   public R getTrie() {

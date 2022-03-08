@@ -48,7 +48,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -62,27 +61,30 @@ public class DiskBasedRadixTrie extends
 
   private static final Logger LOGGER = LogManager.getLogger();
   private final Path rootPath;
+  int cacheSize = ConfigurationHelper.getConfig()
+      .getInt("radix.disk_based.hardware_cache.mem_cache_for_hw_cache.elements");
+  int sizeOnDisk = ConfigurationHelper.getConfig()
+      .getInt("radix.disk_based.hardware_cache.serialized");
+  int remainingOnDisk = ConfigurationHelper.getConfig()
+      .getInt("radix.disk_based.hardware_cache.serialized.remaining");
+  int maxHeight = ConfigurationHelper.getConfig().getInt("radix.height.max");
+  int rngIndexSizeOnDisk = ConfigurationHelper.getConfig()
+      .getInt("radix.disk_based.hardware_cache.serialized.rng_index");
+  int seedIndexSizeOnDisk = ConfigurationHelper.getConfig()
+      .getInt("radix.disk_based.hardware_cache.serialized.seed_index");
+  int byteIndexSizeOnDisk = ConfigurationHelper.getConfig()
+      .getInt("radix.disk_based.hardware_cache.serialized.byte_index");
+  int partitionSize = ConfigurationHelper.getConfig().getInt("radix.partition.size");
+  long amountPerPRNG = ConfigurationHelper.getConfig().getLong("radix.prng.amount");
   // cache inserts add data-points to single data object, which will result in whole object writes
   private Map<ByteBuffer, Pair<DiskBasedRandomnessRadixTrieData, byte[]>> memoryCache;
   private Map<Byte, Collection<RandomnessRadixTrieDataPoint>> hardwareFillMemoryCache;
   private Map<Byte, ReentrantReadWriteLock> hardwareFillMemoryCacheLocks;
-
   private Map<Byte, ReentrantLock> hardwareCacheLocks;
-
   private long memoryCacheSize;
   private Map<Byte, MappedByteBuffer> hardwareCaches;
   private Map<Byte, Long> hardwareCachesWriteOffsets;
   private ThreadPoolExecutor threadPoolExecutorHardwareCaches;
-
-  int cacheSize = ConfigurationHelper.getConfig().getInt("radix.disk_based.hardware_cache.mem_cache_for_hw_cache.elements");
-  int sizeOnDisk = ConfigurationHelper.getConfig().getInt("radix.disk_based.hardware_cache.serialized");
-  int remainingOnDisk = ConfigurationHelper.getConfig().getInt("radix.disk_based.hardware_cache.serialized.remaining");
-  int maxHeight = ConfigurationHelper.getConfig().getInt("radix.height.max");
-  int rngIndexSizeOnDisk = ConfigurationHelper.getConfig().getInt("radix.disk_based.hardware_cache.serialized.rng_index");
-  int seedIndexSizeOnDisk = ConfigurationHelper.getConfig().getInt("radix.disk_based.hardware_cache.serialized.seed_index");
-  int byteIndexSizeOnDisk = ConfigurationHelper.getConfig().getInt("radix.disk_based.hardware_cache.serialized.byte_index");
-  int partitionSize = ConfigurationHelper.getConfig().getInt("radix.partition.size");
-  long amountPerPRNG = ConfigurationHelper.getConfig().getLong("radix.prng.amount");
 
   /**
    * Creates a new DiskBasedRadixTrie at the specified location.
@@ -148,6 +150,49 @@ public class DiskBasedRadixTrie extends
     }
   }
 
+  /**
+   * https://stackoverflow.com/questions/2972986/how-to-unmap-a-file-from-memory-mapped-using-filechannel-in-java
+   *
+   * @param cb buffer to close
+   */
+  private static void closeDirectBuffer(ByteBuffer cb) {
+    if (cb == null || !cb.isDirect()) {
+      return;
+    }
+    // we could use this type cast and call functions without reflection code,
+    // but static import from sun.* package is risky for non-SUN virtual machine.
+    //try { ((sun.nio.ch.DirectBuffer)cb).cleaner().clean(); } catch (Exception ex) { }
+
+    // JavaSpecVer: 1.6, 1.7, 1.8, 9, 10
+    boolean isOldJDK = System.getProperty("java.specification.version", "99").startsWith("1.");
+    try {
+      if (isOldJDK) {
+        Method cleaner = cb.getClass().getMethod("cleaner");
+        cleaner.setAccessible(true);
+        Method clean = Class.forName("sun.misc.Cleaner").getMethod("clean");
+        clean.setAccessible(true);
+        clean.invoke(cleaner.invoke(cb));
+      } else {
+        Class<?> unsafeClass;
+        try {
+          unsafeClass = Class.forName("sun.misc.Unsafe");
+        } catch (Exception ex) {
+          // jdk.internal.misc.Unsafe doesn't yet have an invokeCleaner() method,
+          // but that method should be added if sun.misc.Unsafe is removed.
+          unsafeClass = Class.forName("jdk.internal.misc.Unsafe");
+        }
+        Method clean = unsafeClass.getMethod("invokeCleaner", ByteBuffer.class);
+        clean.setAccessible(true);
+        Field theUnsafeField = unsafeClass.getDeclaredField("theUnsafe");
+        theUnsafeField.setAccessible(true);
+        Object theUnsafe = theUnsafeField.get(null);
+        clean.invoke(theUnsafe, cb);
+      }
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
   @Override
   public @NotNull DiskBasedRadixTrieNode getDummyNode() {
     return new DiskBasedRadixTrieNode(true, null, rootPath, this);
@@ -158,7 +203,8 @@ public class DiskBasedRadixTrie extends
       @NotNull DiskBasedRadixTrieNode parentNode) {
     Deque<PathRadixTrieEdge> path = parentNode.getEdgesFromRoot();
 
-    Path newPath = parentNode.getPath().resolve(Arrays.stream(label).reduce(String::concat).orElse(""));
+    Path newPath = parentNode.getPath()
+        .resolve(Arrays.stream(label).reduce(String::concat).orElse(""));
 
     //noinspection ResultOfMethodCallIgnored
     newPath.toFile().mkdir();
@@ -215,9 +261,10 @@ public class DiskBasedRadixTrie extends
 
       ProcessBuilder builder = new ProcessBuilder();
       if (isWindows) {
-        builder.command("cmd.exe", "/c", "rmdir", "/s", "/q", "\""+getRoot().getPath().toString()+"\"");
+        builder.command("cmd.exe", "/c", "rmdir", "/s", "/q",
+            "\"" + getRoot().getPath().toString() + "\"");
       } else {
-        builder.command("sh", "-c", "rm -rf " +getRoot().getPath().toString());
+        builder.command("sh", "-c", "rm -rf " + getRoot().getPath().toString());
       }
       builder.directory(new File(System.getProperty("user.home")));
       builder.redirectOutput(Redirect.DISCARD);
@@ -335,7 +382,8 @@ public class DiskBasedRadixTrie extends
 
   @Override
   public void serializeMetaData() {
-    File file = rootPath.resolve(ConfigurationHelper.getConfig().getString("radix.trie.file_name")).toFile();
+    File file = rootPath.resolve(ConfigurationHelper.getConfig().getString("radix.trie.file_name"))
+        .toFile();
     if (!file.exists()) {
       try {
         //noinspection ResultOfMethodCallIgnored
@@ -353,7 +401,8 @@ public class DiskBasedRadixTrie extends
   }
 
   private void deserializeMetaData() {
-    File file = rootPath.resolve(ConfigurationHelper.getConfig().getString("radix.trie.file_name")).toFile();
+    File file = rootPath.resolve(ConfigurationHelper.getConfig().getString("radix.trie.file_name"))
+        .toFile();
     try (BufferedReader reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8))) {
       String line = reader.readLine();
 
@@ -375,7 +424,8 @@ public class DiskBasedRadixTrie extends
       fillHardwareCaches();
 
       long pong = System.nanoTime();
-      LOGGER.info("Generated all random data for " + this.metaData.getId() + " in " + (pong-ping) + "ns");
+      LOGGER.info(
+          "Generated all random data for " + this.metaData.getId() + " in " + (pong - ping) + "ns");
 
       getMetaData().setStatus(RadixTrieStatus.GENERATED);
       serializeMetaData();
@@ -389,7 +439,9 @@ public class DiskBasedRadixTrie extends
       long ping = System.nanoTime();
       sortAndAddHardwareCaches();
       long pong = System.nanoTime();
-      LOGGER.info("Added all random data to tree for " + this.metaData.getId() + " in " + (pong-ping) + "ns");
+      LOGGER.info(
+          "Added all random data to tree for " + this.metaData.getId() + " in " + (pong - ping)
+              + "ns");
 
       getMetaData().setStatus(RadixTrieStatus.FINISHED);
       serializeMetaData();
@@ -410,7 +462,8 @@ public class DiskBasedRadixTrie extends
     try {
       assert prngClass != null;
       PRNG instance = prngClass.getConstructor(long.class).newInstance(seed);
-      byte[] precedingBytes = instance.getBytes(byteIndex - discardedIndexingData.length, discardedIndexingData.length);
+      byte[] precedingBytes = instance.getBytes(byteIndex - discardedIndexingData.length,
+          discardedIndexingData.length);
 
       if (Arrays.equals(precedingBytes, discardedIndexingData)) {
         return true;
@@ -443,61 +496,20 @@ public class DiskBasedRadixTrie extends
     return result;
   }
 
-  /**
-   * https://stackoverflow.com/questions/2972986/how-to-unmap-a-file-from-memory-mapped-using-filechannel-in-java
-   * @param cb buffer to close
-   */
-  private static void closeDirectBuffer(ByteBuffer cb) {
-    if (cb==null || !cb.isDirect()) return;
-    // we could use this type cast and call functions without reflection code,
-    // but static import from sun.* package is risky for non-SUN virtual machine.
-    //try { ((sun.nio.ch.DirectBuffer)cb).cleaner().clean(); } catch (Exception ex) { }
-
-    // JavaSpecVer: 1.6, 1.7, 1.8, 9, 10
-    boolean isOldJDK = System.getProperty("java.specification.version","99").startsWith("1.");
-    try {
-      if (isOldJDK) {
-        Method cleaner = cb.getClass().getMethod("cleaner");
-        cleaner.setAccessible(true);
-        Method clean = Class.forName("sun.misc.Cleaner").getMethod("clean");
-        clean.setAccessible(true);
-        clean.invoke(cleaner.invoke(cb));
-      } else {
-        Class<?> unsafeClass;
-        try {
-          unsafeClass = Class.forName("sun.misc.Unsafe");
-        } catch(Exception ex) {
-          // jdk.internal.misc.Unsafe doesn't yet have an invokeCleaner() method,
-          // but that method should be added if sun.misc.Unsafe is removed.
-          unsafeClass = Class.forName("jdk.internal.misc.Unsafe");
-        }
-        Method clean = unsafeClass.getMethod("invokeCleaner", ByteBuffer.class);
-        clean.setAccessible(true);
-        Field theUnsafeField = unsafeClass.getDeclaredField("theUnsafe");
-        theUnsafeField.setAccessible(true);
-        Object theUnsafe = theUnsafeField.get(null);
-        clean.invoke(theUnsafe, cb);
-      }
-    } catch(Exception ex) {
-      ex.printStackTrace();
-    }
-  }
-
   private void sortAndAddHardwareCaches() {
     hardwareCaches = null;
-
-
 
     final int maxPartitionBytesInArray = Integer.MAX_VALUE - (Integer.MAX_VALUE % sizeOnDisk);
 
     for (int bite = Byte.MIN_VALUE; bite <= Byte.MAX_VALUE; bite++) {
       int elementCount = 0;
-      File file = rootPath.resolve("caches" + rootPath.getFileSystem().getSeparator()+bite+".bin").toFile();
+      File file = rootPath.resolve(
+          "caches" + rootPath.getFileSystem().getSeparator() + bite + ".bin").toFile();
 
       try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(), EnumSet.of(
           StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE))) {
         int reads = (int) Math.ceil(((double) fileChannel.size() / maxPartitionBytesInArray));
-        MappedByteBuffer[] buffers =  new MappedByteBuffer[reads];
+        MappedByteBuffer[] buffers = new MappedByteBuffer[reads];
 
         long ping = System.nanoTime();
         for (int i = 0; i < reads; i++) {
@@ -510,10 +522,13 @@ public class DiskBasedRadixTrie extends
           buffers[i] = mappedByteBuffer;
         }
 
-        WrappedByteBuffers wrappedArray = new WrappedByteBuffers(buffers, sizeOnDisk, elementCount, remainingOnDisk);
+        WrappedByteBuffers wrappedArray = new WrappedByteBuffers(buffers, sizeOnDisk, elementCount,
+            remainingOnDisk);
         long pong = System.nanoTime();
-        LOGGER.debug("Read hardware cache for tree " + this.metaData.getId() + " for byte " + bite + " in " + (
-            pong - ping) + "ns");
+        LOGGER.debug(
+            "Read hardware cache for tree " + this.metaData.getId() + " for byte " + bite + " in "
+                + (
+                pong - ping) + "ns");
 
         ping = System.nanoTime();
 
@@ -522,15 +537,18 @@ public class DiskBasedRadixTrie extends
         }
 
         pong = System.nanoTime();
-        LOGGER.debug("Sorted hardware cache for tree " + this.metaData.getId() + " for byte " + bite + " in " + (
-            pong - ping) + "ns");
-
+        LOGGER.debug(
+            "Sorted hardware cache for tree " + this.metaData.getId() + " for byte " + bite + " in "
+                + (
+                pong - ping) + "ns");
 
         ping = System.nanoTime();
-          collapseCacheAndAdd(wrappedArray, elementCount);
-          pong = System.nanoTime();
-          LOGGER.debug("Collapsed and added hardware cache for tree " + this.metaData.getId() + " for byte " + bite
-              + " in " + (pong - ping) + "ns");
+        collapseCacheAndAdd(wrappedArray, elementCount);
+        pong = System.nanoTime();
+        LOGGER.debug(
+            "Collapsed and added hardware cache for tree " + this.metaData.getId() + " for byte "
+                + bite
+                + " in " + (pong - ping) + "ns");
 
         Arrays.stream(buffers).forEach(DiskBasedRadixTrie::closeDirectBuffer);
       } catch (IOException e) {
@@ -545,28 +563,29 @@ public class DiskBasedRadixTrie extends
 
   private void collapseCacheAndAdd(WrappedByteBuffers wrappedArray, int elementCount) {
 
-
     this.flushMemoryCache();
     this.memoryCache = null;
     int index = 0;
     int[] sortedIndices = wrappedArray.getIndexArray();
     int coreCount = ConfigurationHelper.getConfig().getInt("radix.disk_based.cores");
 
-
     // can do it in parallel, but only one byte at a time (ram size!)
     ThreadPoolExecutor tpe = new ThreadPoolExecutor(Math.min(Runtime.getRuntime()
         .availableProcessors(), coreCount), Math.min(Runtime.getRuntime()
         .availableProcessors(), coreCount), 20, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
 
-    while(index < elementCount) {
+    while (index < elementCount) {
       int sortedIndex = sortedIndices[index];
 
       byte[] dataPoint = wrappedArray.get(sortedIndex);
-      int lastIndex = CacheUtil.lastIndexOf(sortedIndices, Arrays.copyOfRange(dataPoint, 0, maxHeight), wrappedArray, index, elementCount);
+      int lastIndex = CacheUtil.lastIndexOf(sortedIndices,
+          Arrays.copyOfRange(dataPoint, 0, maxHeight), wrappedArray, index, elementCount);
 
-      DiskBasedRandomnessRadixTrieData data = new DiskBasedRandomnessRadixTrieData(this, wrappedArray, index, lastIndex);
+      DiskBasedRandomnessRadixTrieData data = new DiskBasedRandomnessRadixTrieData(this,
+          wrappedArray, index, lastIndex);
 
-      byte[] indexingData = new RandomnessRadixTrieDataPoint(dataPoint, remainingOnDisk).getRemainingIndexingData();
+      byte[] indexingData = new RandomnessRadixTrieDataPoint(dataPoint,
+          remainingOnDisk).getRemainingIndexingData();
 
       // race condition: what if wrapped array changes?
       // -> it can not change
@@ -574,7 +593,7 @@ public class DiskBasedRadixTrie extends
         this.add(data, indexingData);
       });
 
-      index = lastIndex+1;
+      index = lastIndex + 1;
     }
 
     tpe.shutdown();
@@ -589,23 +608,23 @@ public class DiskBasedRadixTrie extends
 
   private void deleteHardwareCache(int bite) {
     try {
-      Files.delete(rootPath.resolve("caches" + rootPath.getFileSystem().getSeparator()+bite+".bin"));
+      Files.delete(
+          rootPath.resolve("caches" + rootPath.getFileSystem().getSeparator() + bite + ".bin"));
     } catch (IOException e) {
       e.printStackTrace();
     }
   }
 
-  private void readHardwareCache(RandomnessRadixTrieDataPoint[] cacheArray, AtomicInteger offset, MappedByteBuffer mappedByteBuffer) {
-
+  private void readHardwareCache(RandomnessRadixTrieDataPoint[] cacheArray, AtomicInteger offset,
+      MappedByteBuffer mappedByteBuffer) {
 
     byte[] serializedData = new byte[sizeOnDisk];
 
     while (mappedByteBuffer.hasRemaining() && mappedByteBuffer.remaining() >= sizeOnDisk) {
       mappedByteBuffer.get(serializedData, 0, sizeOnDisk);
 
-
       boolean allZero = true;
-      for (int i = 0; i < sizeOnDisk && allZero; i ++) {
+      for (int i = 0; i < sizeOnDisk && allZero; i++) {
         allZero = serializedData[i] == 0;
       }
 
@@ -614,13 +633,16 @@ public class DiskBasedRadixTrie extends
         return;
       }
 
-      RandomnessRadixTrieDataPoint dataPoint = new RandomnessRadixTrieDataPoint(serializedData, remainingOnDisk, rngIndexSizeOnDisk, seedIndexSizeOnDisk, byteIndexSizeOnDisk);
+      RandomnessRadixTrieDataPoint dataPoint = new RandomnessRadixTrieDataPoint(serializedData,
+          remainingOnDisk, rngIndexSizeOnDisk, seedIndexSizeOnDisk, byteIndexSizeOnDisk);
       cacheArray[offset.getAndIncrement()] = dataPoint;
     }
   }
 
   /**
-   * Generates randomness using the prng and all seeds in the specified range and adds it to the hardware cache
+   * Generates randomness using the prng and all seeds in the specified range and adds it to the
+   * hardware cache
+   *
    * @param prng
    * @param seedOffset
    * @param end
@@ -631,7 +653,8 @@ public class DiskBasedRadixTrie extends
 
     LOGGER.debug("Generating " + prng + " with seeds from " + seedOffset + " to " + end);
 
-    for (int seedIndex = Math.max(0, Math.min(seedMap.size() -1, seedOffset)); seedIndex < Math.min(seedMap.size(), end); seedIndex++) {
+    for (int seedIndex = Math.max(0, Math.min(seedMap.size() - 1, seedOffset));
+        seedIndex < Math.min(seedMap.size(), end); seedIndex++) {
       long seed = seedMap.get(seedIndex);
       try {
         PRNG instance = ImplementedPRNGs.getPRNG(prng, seed);
@@ -656,19 +679,22 @@ public class DiskBasedRadixTrie extends
     final BiMap<Integer, Long> seedMap = getSeedMap();
     int cores = ConfigurationHelper.getConfig().getInt("radix.disk_based.cores");
 
-    threadPoolExecutorHardwareCaches = new ThreadPoolExecutor(cores, cores, 20, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+    threadPoolExecutorHardwareCaches = new ThreadPoolExecutor(cores, cores, 20,
+        TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
     threadPoolExecutorHardwareCaches.setRejectedExecutionHandler(new CallerRunsPolicy());
 
     int threadsPerPrng = cores / RNGManager.getPRNGEnum()
         .size();
-    LOGGER.info("Will start " + threadsPerPrng +" threads per PRNG");
+    LOGGER.info("Will start " + threadsPerPrng + " threads per PRNG");
     int seedsLengthPerThread = seedMap.size() / Math.max(1, threadsPerPrng);
-    LOGGER.info("Will allocate " + seedsLengthPerThread +" seeds per thread");
+    LOGGER.info("Will allocate " + seedsLengthPerThread + " seeds per thread");
 
     for (ImplementedPRNGs prng : RNGManager.getPRNGEnum()) {
       for (int i = 0; i <= threadsPerPrng; i++) {
         int finalI = i;
-        threadPoolExecutorHardwareCaches.execute(() -> generateRandomness(prng, finalI * seedsLengthPerThread, (finalI + 1) * seedsLengthPerThread));
+        threadPoolExecutorHardwareCaches.execute(
+            () -> generateRandomness(prng, finalI * seedsLengthPerThread,
+                (finalI + 1) * seedsLengthPerThread));
       }
     }
 
@@ -685,7 +711,8 @@ public class DiskBasedRadixTrie extends
 
     LOGGER.info("All fill threads finished for " + this + ". Timeout? " + !finished);
 
-    threadPoolExecutorHardwareCaches = new ThreadPoolExecutor(cores, cores, 20, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+    threadPoolExecutorHardwareCaches = new ThreadPoolExecutor(cores, cores, 20,
+        TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
     threadPoolExecutorHardwareCaches.setRejectedExecutionHandler(new CallerRunsPolicy());
 
     if (usesMemoryCache()) {
@@ -710,13 +737,15 @@ public class DiskBasedRadixTrie extends
   private void truncateHardwareCaches() {
     for (int bite = Byte.MIN_VALUE; bite <= Byte.MAX_VALUE; bite++) {
       File file = rootPath
-          .resolve("caches" + rootPath.getFileSystem().getSeparator() + (byte) bite + ".bin").toFile();
+          .resolve("caches" + rootPath.getFileSystem().getSeparator() + (byte) bite + ".bin")
+          .toFile();
       try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(), EnumSet.of(
           StandardOpenOption.READ, StandardOpenOption.WRITE))) {
         MappedByteBuffer mbb = hardwareCaches.get((byte) bite);
         long length = hardwareCachesWriteOffsets.get((byte) bite) + mbb.position();
         hardwareCaches.put((byte) bite, null);
-        LOGGER.debug("Deleted MemoryMappedFile for tree " + this.metaData.getId() + " for byte " + bite);
+        LOGGER.debug(
+            "Deleted MemoryMappedFile for tree " + this.metaData.getId() + " for byte " + bite);
         closeDirectBuffer(mbb);
 
         //accessing the mbb after cleaning would crash the whole JVM, this way we "only" get a null pointer from which we can recover
@@ -724,7 +753,8 @@ public class DiskBasedRadixTrie extends
         mbb = null;
 
         fileChannel.truncate(length);
-        LOGGER.debug("Truncated hardware cache for tree " + this.metaData.getId() + " for byte " + bite);
+        LOGGER.debug(
+            "Truncated hardware cache for tree " + this.metaData.getId() + " for byte " + bite);
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -757,7 +787,9 @@ public class DiskBasedRadixTrie extends
 
     lock.writeLock().lock();
 
-    Collection<RandomnessRadixTrieDataPoint> finalCollection = this.hardwareFillMemoryCache.get(bite);;
+    Collection<RandomnessRadixTrieDataPoint> finalCollection = this.hardwareFillMemoryCache.get(
+        bite);
+    ;
     threadPoolExecutorHardwareCaches.execute(() -> addToHardwareCacheDirectly(finalCollection));
     hardwareFillMemoryCache.put(bite, Collections.synchronizedList(new ArrayList<>()));
 
@@ -766,15 +798,18 @@ public class DiskBasedRadixTrie extends
 
 
   /**
-   * Directly adds data points to hardware cache without memory caching
-   * All datapoints need to be with the same starting byte
+   * Directly adds data points to hardware cache without memory caching All datapoints need to be
+   * with the same starting byte
+   *
    * @param randomnessRadixTrieDataPoints
    */
-  private void addToHardwareCacheDirectly(Collection<RandomnessRadixTrieDataPoint> randomnessRadixTrieDataPoints) {
+  private void addToHardwareCacheDirectly(
+      Collection<RandomnessRadixTrieDataPoint> randomnessRadixTrieDataPoints) {
     if (randomnessRadixTrieDataPoints == null || randomnessRadixTrieDataPoints.size() == 0) {
       return;
     }
-    byte bite = randomnessRadixTrieDataPoints.stream().findFirst().get().getRemainingIndexingData()[0];
+    byte bite = randomnessRadixTrieDataPoints.stream().findFirst().get()
+        .getRemainingIndexingData()[0];
 
     hardwareCacheLocks.get(bite).lock();
     {
@@ -796,9 +831,11 @@ public class DiskBasedRadixTrie extends
 
   /**
    * Directly adds data point to hardware cache without memory caching
+   *
    * @param randomnessRadixTrieDataPoint
    */
-  private void addToHardwareCacheDirectly(RandomnessRadixTrieDataPoint randomnessRadixTrieDataPoint) {
+  private void addToHardwareCacheDirectly(
+      RandomnessRadixTrieDataPoint randomnessRadixTrieDataPoint) {
     byte bite = randomnessRadixTrieDataPoint.getRemainingIndexingData()[0];
 
     //LOGGER.debug("Attempting to write to hw cache");
@@ -815,7 +852,7 @@ public class DiskBasedRadixTrie extends
         //LOGGER.debug("resized hw cache");
       }
 
-        mbb.put(serializedData);
+      mbb.put(serializedData);
     }
     //System.out.println("final unlock: " + hardwareCacheLocks.get(bite).getHoldCount());
     hardwareCacheLocks.get(bite).unlock();
@@ -830,13 +867,16 @@ public class DiskBasedRadixTrie extends
       MappedByteBuffer mbb = this.hardwareCaches.get(bite);
       int length = mbb.position();
       closeDirectBuffer(mbb);
-      hardwareCachesWriteOffsets.computeIfPresent(bite, (k,v) -> (v + length));
+      hardwareCachesWriteOffsets.computeIfPresent(bite, (k, v) -> (v + length));
 
-      File file = rootPath.resolve("caches"+ rootPath.getFileSystem().getSeparator() + bite + ".bin").toFile();
+      File file = rootPath.resolve(
+          "caches" + rootPath.getFileSystem().getSeparator() + bite + ".bin").toFile();
       try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(), EnumSet.of(
           StandardOpenOption.READ, StandardOpenOption.WRITE))) {
-        int cacheSize = ConfigurationHelper.getConfig().getInt("radix.disk_based.hardware_cache.size");
-        MappedByteBuffer mappedByteBuffer = fileChannel.map(MapMode.READ_WRITE, hardwareCachesWriteOffsets.get(bite), cacheSize);
+        int cacheSize = ConfigurationHelper.getConfig()
+            .getInt("radix.disk_based.hardware_cache.size");
+        MappedByteBuffer mappedByteBuffer = fileChannel.map(MapMode.READ_WRITE,
+            hardwareCachesWriteOffsets.get(bite), cacheSize);
 
         hardwareCaches.put(bite, mappedByteBuffer);
       } catch (IOException e) {
@@ -851,13 +891,15 @@ public class DiskBasedRadixTrie extends
 
   private void initializeHardwareCaches() {
     if (hardwareCaches == null) {
-      int cacheSize = ConfigurationHelper.getConfig().getInt("radix.disk_based.hardware_cache.size");
+      int cacheSize = ConfigurationHelper.getConfig()
+          .getInt("radix.disk_based.hardware_cache.size");
       hardwareCaches = new HashMap<>();
       hardwareCachesWriteOffsets = new HashMap<>();
       for (int bite = Byte.MIN_VALUE; bite <= Byte.MAX_VALUE; bite++) {
         //noinspection ResultOfMethodCallIgnored
         rootPath.resolve("caches" + rootPath.getFileSystem().getSeparator()).toFile().mkdirs();
-        File file = rootPath.resolve("caches"+ rootPath.getFileSystem().getSeparator() + bite + ".bin").toFile();
+        File file = rootPath.resolve(
+            "caches" + rootPath.getFileSystem().getSeparator() + bite + ".bin").toFile();
 
         try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(), EnumSet.of(
             StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE))) {

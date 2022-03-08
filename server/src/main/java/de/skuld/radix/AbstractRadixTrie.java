@@ -241,13 +241,13 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
     int partitionSize = ConfigurationHelper.getConfig().getInt("radix.partition.size");
 
     // TODO if we shift too often, we have to many partial matches which tanks our performance
-    for (int i = 0; i < partitionSize-26; i++) {
+    for (int i = 0; i < partitionSize - 26; i++) {
       // shift
       I shiftedIndexingData = shiftIndexingData(indexingData, i);
       I discardedIndexingData = getDiscardedIndexingData(indexingData, i);
 
       // search
-      Optional<N> node =  getNode(shiftedIndexingData);
+      Optional<N> node = getNode(shiftedIndexingData);
       Collection<P> dataPoints = node.isPresent() && node.get().isLeafNode() ?
           node.get().getData().getDataPoints(shiftedIndexingData) : Collections.emptyList();
 

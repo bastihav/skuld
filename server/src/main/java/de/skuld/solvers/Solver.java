@@ -33,7 +33,9 @@ public interface Solver {
   }
 
   /**
-   * Verifies whether the PRNG will generate all those randoms in that order (not necessarily consecutively) using the seed
+   * Verifies whether the PRNG will generate all those randoms in that order (not necessarily
+   * consecutively) using the seed
+   *
    * @param randoms
    * @param seed
    * @return
@@ -59,6 +61,7 @@ public interface Solver {
 
   /**
    * Gets the PRNG that this Solver solves
+   *
    * @return
    */
   ImplementedPRNGs getPrng();

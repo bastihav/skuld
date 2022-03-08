@@ -11,26 +11,35 @@ public class CBCIVPreProcessor implements PreProcessor {
 
   @Override
   public List<byte[]> preprocess(Result result, List<byte[]> input) {
-    if (input == null) return Collections.emptyList();
+    if (input == null) {
+      return Collections.emptyList();
+    }
     List<byte[]> inputCopy = new ArrayList<>(input);
 
     inputCopy.removeIf(Objects::isNull);
     inputCopy.removeIf(bytes -> bytes.length != 16);
 
-    result.getTlsTests().setAllZeroIV(inputCopy.size() > 0 && inputCopy.stream().allMatch(this::allZero));
+    result.getTlsTests()
+        .setAllZeroIV(inputCopy.size() > 0 && inputCopy.stream().allMatch(this::allZero));
     result.getTlsTests().setReusesIV(inputCopy.size() > 0 && reusesRandom(inputCopy));
 
     return inputCopy;
   }
 
   private boolean reusesRandom(List<byte[]> randoms) {
-    if (randoms.size() == 0) return false;
+    if (randoms.size() == 0) {
+      return false;
+    }
 
     for (int i = 0; i < randoms.size(); i++) {
       for (int i1 = i; i1 < randoms.size(); i1++) {
-        if (i == i1) continue;
+        if (i == i1) {
+          continue;
+        }
         boolean reused = Arrays.equals(randoms.get(i), 0, 16, randoms.get(i1), 0, 16);
-        if (reused) return true;
+        if (reused) {
+          return true;
+        }
       }
     }
 

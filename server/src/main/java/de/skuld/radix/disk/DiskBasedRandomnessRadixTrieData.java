@@ -42,7 +42,8 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
     this.trie = trie;
   }
 
-  public DiskBasedRandomnessRadixTrieData(DiskBasedRadixTrie trie, WrappedByteBuffers buffer, int startIndex, int endIndex) {
+  public DiskBasedRandomnessRadixTrieData(DiskBasedRadixTrie trie, WrappedByteBuffers buffer,
+      int startIndex, int endIndex) {
     super(null);
     this.p = null;
     this.resolved = true;
@@ -69,7 +70,8 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
       for (int i = startIndex; i <= endIndex; i++) {
         byte[] array = buffer.get(indices[i]);
 
-        writeBuffer.put(array, remainingIndexingDataOffset, array.length - remainingIndexingDataOffset);
+        writeBuffer.put(array, remainingIndexingDataOffset,
+            array.length - remainingIndexingDataOffset);
       }
     } else {
       super.serialize(mappedByteBuffer, offset);
@@ -196,13 +198,15 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
       RandomnessRadixTrieDataPoint middleDataPoint = new RandomnessRadixTrieDataPoint(array);
       byte[] remainingData = middleDataPoint.getRemainingIndexingData();
 
-      byte[] dataToCompareTo = remainingData.length > leastSignificantBytes.length ? Arrays.copyOfRange(remainingData, 0, leastSignificantBytes.length) : remainingData;
+      byte[] dataToCompareTo =
+          remainingData.length > leastSignificantBytes.length ? Arrays.copyOfRange(remainingData, 0,
+              leastSignificantBytes.length) : remainingData;
 
       if (UnsignedBytes.lexicographicalComparator().compare(leastSignificantBytes,
           dataToCompareTo) == 0) {
         // we found the element, check left and right to get all that match this query of < 32 bytes
 
-        int lastIndex = lastIndexOf(0, (int) (amountOfDataPoints -1), query);
+        int lastIndex = lastIndexOf(0, (int) (amountOfDataPoints - 1), query);
         int firstIndex = firstIndexOf(0, lastIndex, query);
 
         return deserialzeDataPoints(firstIndex, lastIndex);
@@ -216,13 +220,14 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
   }
 
   /**
-   *
    * @param firstIndex inclusive
-   * @param lastIndex inclusive
+   * @param lastIndex  inclusive
    * @return
    */
-  private Collection<RandomnessRadixTrieDataPoint> deserialzeDataPoints(int firstIndex, int lastIndex) {
-    Collection<RandomnessRadixTrieDataPoint> dataPoints = new ArrayList<>(lastIndex-firstIndex + 1);
+  private Collection<RandomnessRadixTrieDataPoint> deserialzeDataPoints(int firstIndex,
+      int lastIndex) {
+    Collection<RandomnessRadixTrieDataPoint> dataPoints = new ArrayList<>(
+        lastIndex - firstIndex + 1);
     int partitionSizeOnDisk = ConfigurationHelper.getConfig().getInt("radix.partition.serialized");
     byte[] array = new byte[partitionSizeOnDisk];
 
@@ -242,7 +247,6 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
         .getInt("radix.partition.serialized.remaining");
     int inEdges = partitionSize - remainingSize;
 
-
     if (query.length < inEdges) {
       return 0;
     }
@@ -260,7 +264,9 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
 
       RandomnessRadixTrieDataPoint middleDataPoint = new RandomnessRadixTrieDataPoint(array);
       byte[] remainingData = middleDataPoint.getRemainingIndexingData();
-      byte[] dataToCompareTo = remainingData.length > leastSignificantBytes.length ? Arrays.copyOfRange(remainingData, 0, leastSignificantBytes.length) : remainingData;
+      byte[] dataToCompareTo =
+          remainingData.length > leastSignificantBytes.length ? Arrays.copyOfRange(remainingData, 0,
+              leastSignificantBytes.length) : remainingData;
 
       int comparison = UnsignedBytes.lexicographicalComparator().compare(leastSignificantBytes,
           dataToCompareTo);
@@ -289,7 +295,7 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
     while (left <= right) {
       int mid = left + (right - left) / 2;
 
-      if (mid >= getElementCount()-1) {
+      if (mid >= getElementCount() - 1) {
         return mid;
       }
 
@@ -300,7 +306,9 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
 
       RandomnessRadixTrieDataPoint middleDataPoint = new RandomnessRadixTrieDataPoint(array);
       byte[] remainingData = middleDataPoint.getRemainingIndexingData();
-      byte[] dataToCompareTo = remainingData.length > leastSignificantBytes.length ? Arrays.copyOfRange(remainingData, 0, leastSignificantBytes.length) : remainingData;
+      byte[] dataToCompareTo =
+          remainingData.length > leastSignificantBytes.length ? Arrays.copyOfRange(remainingData, 0,
+              leastSignificantBytes.length) : remainingData;
 
       int comparison = UnsignedBytes.lexicographicalComparator().compare(leastSignificantBytes,
           dataToCompareTo);
@@ -336,7 +344,7 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
     while (left <= right) {
       int mid = left + (right - left) / 2;
 
-      if (mid >= getElementCount()-1) {
+      if (mid >= getElementCount() - 1) {
         return mid;
       }
 
@@ -347,7 +355,9 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
 
       RandomnessRadixTrieDataPoint middleDataPoint = new RandomnessRadixTrieDataPoint(array);
       byte[] remainingData = middleDataPoint.getRemainingIndexingData();
-      byte[] dataToCompareTo = remainingData.length > leastSignificantBytes.length ? Arrays.copyOfRange(remainingData, 0, leastSignificantBytes.length) : remainingData;
+      byte[] dataToCompareTo =
+          remainingData.length > leastSignificantBytes.length ? Arrays.copyOfRange(remainingData, 0,
+              leastSignificantBytes.length) : remainingData;
 
       int comparison = UnsignedBytes.lexicographicalComparator().compare(leastSignificantBytes,
           dataToCompareTo);

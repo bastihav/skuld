@@ -11,8 +11,8 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-02-22T14:08:42.430Z[GMT]")
 
+public class ResultTlsTests {
 
-public class ResultTlsTests   {
   @JsonProperty("unixtime")
   private Boolean unixtime = null;
 
@@ -35,11 +35,12 @@ public class ResultTlsTests   {
 
   /**
    * Get unixtime
+   *
    * @return unixtime
    **/
   @Schema(description = "")
-  
-    public Boolean isUnixtime() {
+
+  public Boolean isUnixtime() {
     return unixtime;
   }
 
@@ -54,11 +55,12 @@ public class ResultTlsTests   {
 
   /**
    * Get reusesIV
+   *
    * @return reusesIV
    **/
   @Schema(description = "")
-  
-    public Boolean isReusesIV() {
+
+  public Boolean isReusesIV() {
     return reusesIV;
   }
 
@@ -73,11 +75,12 @@ public class ResultTlsTests   {
 
   /**
    * Get reusesRandom
+   *
    * @return reusesRandom
    **/
   @Schema(description = "")
-  
-    public Boolean isReusesRandom() {
+
+  public Boolean isReusesRandom() {
     return reusesRandom;
   }
 
@@ -92,11 +95,12 @@ public class ResultTlsTests   {
 
   /**
    * Get allZeroIV
+   *
    * @return allZeroIV
    **/
   @Schema(description = "")
-  
-    public Boolean isAllZeroIV() {
+
+  public Boolean isAllZeroIV() {
     return allZeroIV;
   }
 
@@ -111,11 +115,12 @@ public class ResultTlsTests   {
 
   /**
    * Get allZeroRandom
+   *
    * @return allZeroRandom
    **/
   @Schema(description = "")
-  
-    public Boolean isAllZeroRandom() {
+
+  public Boolean isAllZeroRandom() {
     return allZeroRandom;
   }
 
@@ -149,7 +154,7 @@ public class ResultTlsTests   {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class ResultTlsTests {\n");
-    
+
     sb.append("    unixtime: ").append(toIndentedString(unixtime)).append("\n");
     sb.append("    reusesIV: ").append(toIndentedString(reusesIV)).append("\n");
     sb.append("    reusesRandom: ").append(toIndentedString(reusesRandom)).append("\n");
@@ -160,8 +165,8 @@ public class ResultTlsTests   {
   }
 
   /**
-   * Convert the given object to string with each line indented by 4 spaces
-   * (except the first line).
+   * Convert the given object to string with each line indented by 4 spaces (except the first
+   * line).
    */
   private String toIndentedString(Object o) {
     if (o == null) {

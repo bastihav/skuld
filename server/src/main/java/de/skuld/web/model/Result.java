@@ -14,8 +14,8 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-02-22T14:08:42.430Z[GMT]")
 
+public class Result {
 
-public class Result   {
   @JsonProperty("pairs")
   @Valid
   private List<ResultPairs> pairs = null;
@@ -38,11 +38,12 @@ public class Result   {
 
   /**
    * Get pairs
+   *
    * @return pairs
    **/
   @Schema(description = "")
-      @Valid
-    public List<ResultPairs> getPairs() {
+  @Valid
+  public List<ResultPairs> getPairs() {
     return pairs;
   }
 
@@ -57,12 +58,13 @@ public class Result   {
 
   /**
    * Get tlsTests
+   *
    * @return tlsTests
    **/
   @Schema(description = "")
-  
-    @Valid
-    public ResultTlsTests getTlsTests() {
+
+  @Valid
+  public ResultTlsTests getTlsTests() {
     return tlsTests;
   }
 
@@ -93,7 +95,7 @@ public class Result   {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class Result {\n");
-    
+
     sb.append("    pairs: ").append(toIndentedString(pairs)).append("\n");
     sb.append("    tlsTests: ").append(toIndentedString(tlsTests)).append("\n");
     sb.append("}");
@@ -101,8 +103,8 @@ public class Result   {
   }
 
   /**
-   * Convert the given object to string with each line indented by 4 spaces
-   * (except the first line).
+   * Convert the given object to string with each line indented by 4 spaces (except the first
+   * line).
    */
   private String toIndentedString(Object o) {
     if (o == null) {

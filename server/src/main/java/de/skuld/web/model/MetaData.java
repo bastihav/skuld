@@ -13,50 +13,13 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2022-02-22T13:22:34.185Z[GMT]")
 
+public class MetaData {
 
-public class MetaData   {
   @JsonProperty("uuid")
   private String uuid = null;
 
   @JsonProperty("date")
   private String date = null;
-
-  /**
-   * Gets or Sets status
-   */
-  public enum StatusEnum {
-    CREATED("CREATED"),
-    
-    GENERATING("GENERATING"),
-    
-    GENERATED("GENERATED"),
-    
-    SORTING_ADDING("SORTING_ADDING"),
-    
-    FINISHED("FINISHED");
-
-    private String value;
-
-    StatusEnum(String value) {
-      this.value = value;
-    }
-
-    @Override
-    @JsonValue
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static StatusEnum fromValue(String text) {
-      for (StatusEnum b : StatusEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
-          return b;
-        }
-      }
-      return null;
-    }
-  }
   @JsonProperty("status")
   private StatusEnum status = null;
 
@@ -67,11 +30,12 @@ public class MetaData   {
 
   /**
    * Get uuid
+   *
    * @return uuid
    **/
   @Schema(description = "")
-  
-    public String getUuid() {
+
+  public String getUuid() {
     return uuid;
   }
 
@@ -86,11 +50,12 @@ public class MetaData   {
 
   /**
    * Get date
+   *
    * @return date
    **/
   @Schema(description = "")
-  
-    public String getDate() {
+
+  public String getDate() {
     return date;
   }
 
@@ -105,18 +70,18 @@ public class MetaData   {
 
   /**
    * Get status
+   *
    * @return status
    **/
   @Schema(description = "")
-  
-    public StatusEnum getStatus() {
+
+  public StatusEnum getStatus() {
     return status;
   }
 
   public void setStatus(StatusEnum status) {
     this.status = status;
   }
-
 
   @Override
   public boolean equals(Object o) {
@@ -141,7 +106,7 @@ public class MetaData   {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class MetaData {\n");
-    
+
     sb.append("    uuid: ").append(toIndentedString(uuid)).append("\n");
     sb.append("    date: ").append(toIndentedString(date)).append("\n");
     sb.append("    status: ").append(toIndentedString(status)).append("\n");
@@ -150,13 +115,50 @@ public class MetaData   {
   }
 
   /**
-   * Convert the given object to string with each line indented by 4 spaces
-   * (except the first line).
+   * Convert the given object to string with each line indented by 4 spaces (except the first
+   * line).
    */
   private String toIndentedString(Object o) {
     if (o == null) {
       return "null";
     }
     return o.toString().replace("\n", "\n    ");
+  }
+
+  /**
+   * Gets or Sets status
+   */
+  public enum StatusEnum {
+    CREATED("CREATED"),
+
+    GENERATING("GENERATING"),
+
+    GENERATED("GENERATED"),
+
+    SORTING_ADDING("SORTING_ADDING"),
+
+    FINISHED("FINISHED");
+
+    private String value;
+
+    StatusEnum(String value) {
+      this.value = value;
+    }
+
+    @JsonCreator
+    public static StatusEnum fromValue(String text) {
+      for (StatusEnum b : StatusEnum.values()) {
+        if (String.valueOf(b.value).equals(text)) {
+          return b;
+        }
+      }
+      return null;
+    }
+
+    @Override
+    @JsonValue
+    public String toString() {
+      return String.valueOf(value);
+    }
   }
 }

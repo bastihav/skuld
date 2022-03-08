@@ -26,7 +26,9 @@ public class TLSRandomPreProcessor implements PreProcessor {
 
   @Override
   public List<byte[]> preprocess(Result result, List<byte[]> input) {
-    if (input == null) return Collections.emptyList();
+    if (input == null) {
+      return Collections.emptyList();
+    }
     List<byte[]> inputCopy = new ArrayList<>(input);
 
     inputCopy.removeIf(Objects::isNull);
@@ -35,23 +37,32 @@ public class TLSRandomPreProcessor implements PreProcessor {
     List<byte[]> withoutHRR = inputCopy.stream().filter(arr -> !Arrays.equals(arr,
         HELLO_RETRY_REQUEST_CONST)).collect(Collectors.toList());
 
-    result.getTlsTests().setUnixtime(withoutHRR.size() > 0 && withoutHRR.stream().allMatch(this::hasUnixTimestamp));
-    result.getTlsTests().setAllZeroRandom(withoutHRR.size() > 0 && withoutHRR.stream().allMatch(this::allZero));
-    result.getTlsTests().setReusesRandom(withoutHRR.size() > 0 && reusesRandom(withoutHRR, result.getTlsTests().isUnixtime()));
+    result.getTlsTests()
+        .setUnixtime(withoutHRR.size() > 0 && withoutHRR.stream().allMatch(this::hasUnixTimestamp));
+    result.getTlsTests()
+        .setAllZeroRandom(withoutHRR.size() > 0 && withoutHRR.stream().allMatch(this::allZero));
+    result.getTlsTests().setReusesRandom(
+        withoutHRR.size() > 0 && reusesRandom(withoutHRR, result.getTlsTests().isUnixtime()));
 
     return withoutHRR.stream().map(arr -> removeNonRandom(arr,
         result.getTlsTests().isUnixtime())).collect(Collectors.toList());
   }
 
   private boolean reusesRandom(List<byte[]> randoms, boolean usesUnixTime) {
-    if (randoms.size() == 0) return false;
+    if (randoms.size() == 0) {
+      return false;
+    }
     int start = usesUnixTime ? 4 : 0;
 
     for (int i = 0; i < randoms.size(); i++) {
       for (int i1 = i; i1 < randoms.size(); i1++) {
-        if (i == i1) continue;
+        if (i == i1) {
+          continue;
+        }
         boolean reused = Arrays.equals(randoms.get(i), start, 32, randoms.get(i1), start, 32);
-        if (reused) return true;
+        if (reused) {
+          return true;
+        }
       }
     }
 
@@ -89,7 +100,8 @@ public class TLSRandomPreProcessor implements PreProcessor {
   }
 
   private boolean hasFallbackProtection(byte[] input) {
-    if (Arrays.equals(input, input.length - TLS_1_3_TO_TLS_1_1_DOWNGRADE_CONST.length, input.length, TLS_1_3_TO_TLS_1_1_DOWNGRADE_CONST, 0, TLS_1_3_TO_TLS_1_1_DOWNGRADE_CONST.length)) {
+    if (Arrays.equals(input, input.length - TLS_1_3_TO_TLS_1_1_DOWNGRADE_CONST.length, input.length,
+        TLS_1_3_TO_TLS_1_1_DOWNGRADE_CONST, 0, TLS_1_3_TO_TLS_1_1_DOWNGRADE_CONST.length)) {
       return true;
     }
     return Arrays.equals(input, input.length - TLS_1_3_TO_TLS_1_2_DOWNGRADE_CONST.length,

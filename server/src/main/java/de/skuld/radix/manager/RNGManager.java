@@ -1,11 +1,9 @@
 package de.skuld.radix.manager;
 
 import de.skuld.prng.ImplementedPRNGs;
-import de.skuld.prng.PCG32;
 import de.skuld.prng.PRNG;
 import de.skuld.util.ConfigurationHelper;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -19,7 +17,8 @@ public class RNGManager {
   private final static Logger LOGGER = LogManager.getLogger();
 
   public static Collection<Class<? extends PRNG>> getPRNGs() {
-    String[] prngs = (String[]) ConfigurationHelper.getConfig().getArray(String.class, "radix.pre_comps.prngs");
+    String[] prngs = (String[]) ConfigurationHelper.getConfig()
+        .getArray(String.class, "radix.pre_comps.prngs");
 
     Set<Class<? extends PRNG>> set = new HashSet<>();
 
@@ -42,8 +41,9 @@ public class RNGManager {
   }
 
   public static List<ImplementedPRNGs> getPRNGEnum() {
-    return ConfigurationHelper.getConfig().getList(String.class, "radix.pre_comps.prngs").stream().map(
-        ImplementedPRNGs::valueOf).collect(
-        Collectors.toList());
+    return ConfigurationHelper.getConfig().getList(String.class, "radix.pre_comps.prngs").stream()
+        .map(
+            ImplementedPRNGs::valueOf).collect(
+            Collectors.toList());
   }
 }

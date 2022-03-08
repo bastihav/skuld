@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.Date;
-import java.util.Iterator;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.FileBasedConfiguration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
@@ -24,7 +23,8 @@ public class ConfigurationHelper {
 
   public static void loadDefaultConfig() {
     try {
-      InputStream stream = ConfigurationHelper.class.getClassLoader().getResourceAsStream("config.properties");
+      InputStream stream = ConfigurationHelper.class.getClassLoader()
+          .getResourceAsStream("config.properties");
       File f = File.createTempFile("skuld", "config");
       PrintWriter printWriter = new PrintWriter(f);
       InputStreamReader inputStreamReader = new InputStreamReader(stream);

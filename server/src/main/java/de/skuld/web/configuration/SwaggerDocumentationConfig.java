@@ -17,40 +17,40 @@ import springfox.documentation.spring.web.plugins.Docket;
 @Configuration
 public class SwaggerDocumentationConfig {
 
-    @Bean
-    public Docket customImplementation(){
-        return new Docket(DocumentationType.OAS_30)
-                .select()
-                .apis(RequestHandlerSelectors.basePackage("de.skuld.web.api"))
-                .build()
-                .apiInfo(apiInfo());
-    }
+  @Bean
+  public Docket customImplementation() {
+    return new Docket(DocumentationType.OAS_30)
+        .select()
+        .apis(RequestHandlerSelectors.basePackage("de.skuld.web.api"))
+        .build()
+        .apiInfo(apiInfo());
+  }
 
-    ApiInfo apiInfo() {
-        return new ApiInfoBuilder()
+  ApiInfo apiInfo() {
+    return new ApiInfoBuilder()
+        .title("Skuld API")
+        .description("API for the skuld webservice")
+        .license("MIT License")
+        .licenseUrl("https://github.com/bastihav/skuld/blob/main/LICENSE")
+        .termsOfServiceUrl("")
+        .version("1.0.0")
+        .contact(new Contact("", "", "bastihav@mail.uni-paderborn.de"))
+        .build();
+  }
+
+  @Bean
+  public OpenAPI openApi() {
+    return new OpenAPI()
+        .info(new Info()
             .title("Skuld API")
             .description("API for the skuld webservice")
-            .license("MIT License")
-            .licenseUrl("https://github.com/bastihav/skuld/blob/main/LICENSE")
-            .termsOfServiceUrl("")
+            .termsOfService("")
             .version("1.0.0")
-            .contact(new Contact("","", "bastihav@mail.uni-paderborn.de"))
-            .build();
-    }
-
-    @Bean
-    public OpenAPI openApi() {
-        return new OpenAPI()
-            .info(new Info()
-                .title("Skuld API")
-                .description("API for the skuld webservice")
-                .termsOfService("")
-                .version("1.0.0")
-                .license(new License()
-                    .name("MIT License")
-                    .url("https://github.com/bastihav/skuld/blob/main/LICENSE"))
-                .contact(new io.swagger.v3.oas.models.info.Contact()
-                    .email("bastihav@mail.uni-paderborn.de")));
-    }
+            .license(new License()
+                .name("MIT License")
+                .url("https://github.com/bastihav/skuld/blob/main/LICENSE"))
+            .contact(new io.swagger.v3.oas.models.info.Contact()
+                .email("bastihav@mail.uni-paderborn.de")));
+  }
 
 }
