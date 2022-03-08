@@ -1,9 +1,9 @@
 package de.skuld.solvers;
 
 import de.skuld.prng.ImplementedPRNGs;
-import de.skuld.prng.JavaRandom;
 import de.skuld.prng.PRNG;
 import de.skuld.util.ArrayUtil;
+import de.skuld.util.ConfigurationHelper;
 import java.util.List;
 
 public interface Solver {
@@ -40,8 +40,7 @@ public interface Solver {
    */
   default boolean verify(List<byte[]> randoms, byte[] seed) {
     PRNG random = getPrngImpl(seed);
-    // TODO config
-    byte[] someBytes = new byte[4096];
+    byte[] someBytes = new byte[ConfigurationHelper.getConfig().getInt("radix.solver.verify_size")];
     random.nextBytes(someBytes);
     int currentIndex = -1;
     for (byte[] bytes : randoms) {

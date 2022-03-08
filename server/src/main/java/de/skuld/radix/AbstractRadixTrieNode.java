@@ -2,9 +2,7 @@ package de.skuld.radix;
 
 import com.google.common.collect.ObjectArrays;
 import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.Deque;
-import java.util.stream.Stream;
 
 public abstract class AbstractRadixTrieNode<D extends AbstractRadixTrieData<I, P>, I, P, E extends RadixTrieEdge<D, ? extends RadixTrieNode<D, E>>> implements
     RadixTrieNode<D, E> {

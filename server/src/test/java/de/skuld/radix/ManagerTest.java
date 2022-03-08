@@ -5,32 +5,44 @@ import de.skuld.prng.JavaRandom;
 import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
 import de.skuld.radix.disk.DiskBasedRadixTrie;
 import de.skuld.radix.manager.RadixManager;
+import de.skuld.util.ByteHexUtil;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class ManagerTest {
 
   @Test
-  //@Disabled
+  @Disabled
   public void test() {
     RadixManager<DiskBasedRadixTrie> radixManager = RadixManager.getInstance(Paths.get("G:\\skuld\\"));
     UUID uuid = radixManager.createNewDiskBasedRadixTrie();
     //radixManager.addAllTries();
     radixManager.generateTrie(uuid);
-    radixManager.startUpdaterThread();
+    //radixManager.startUpdaterThread();
     try {
-      Thread.sleep(300*1000);
+      Thread.sleep(180*1000);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
+    System.exit(0);
   }
 
   @Test
+  @Disabled
+  public void debugReadTest() {
+    RadixManager<DiskBasedRadixTrie> radixManager = RadixManager.getInstance(Paths.get("G:\\skuld\\"));
+    byte[] serverRandom = ByteHexUtil.hexToByte("F90ADBE743145A68C861B18C8CC482FB3AB2D7FF074221DB");
+    System.out.println(radixManager.getTrie().search(serverRandom));
+  }
+
+  @Test
+  @Disabled
   public void readPerformanceTestSearchAlgorithm() throws IOException {
     RadixManager<DiskBasedRadixTrie> radixManager = RadixManager.getInstance(Paths.get("G:\\skuld\\"));
     UUID uuid = radixManager.createNewDiskBasedRadixTrie();

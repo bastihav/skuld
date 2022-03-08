@@ -1,17 +1,12 @@
 package de.skuld.radix.manager;
 
 import com.github.f4b6a3.uuid.UuidCreator;
-import de.skuld.radix.AbstractRadixTrieData;
-import de.skuld.radix.AbstractRadixTrieDataPoint;
-import de.skuld.radix.AbstractRadixTrieEdge;
-import de.skuld.radix.AbstractRadixTrieNode;
 import de.skuld.radix.RadixTrie;
-import de.skuld.radix.RadixTrieEdge;
-import de.skuld.radix.RadixTrieNode;
-import de.skuld.radix.data.RandomnessRadixTrieData;
 import de.skuld.radix.disk.DiskBasedRadixTrie;
 import de.skuld.util.ConfigurationHelper;
 import java.io.File;
+import java.io.IOException;
+import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Collections;
@@ -19,6 +14,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Generic radix trie interface
@@ -29,6 +26,7 @@ import java.util.UUID;
  */
 public class RadixManager<R extends RadixTrie<?,?,?,?,?>> {
 
+  private static final Logger LOGGER = LogManager.getLogger();
   private final Map<UUID, R> radixTries = new HashMap<>();
   private final Path rootPath;
   private RadixUpdaterThread<R> radixUpdaterThread;
@@ -47,11 +45,15 @@ public class RadixManager<R extends RadixTrie<?,?,?,?,?>> {
   }
 
   public void addRadixTrie(R trie) {
+    LOGGER.info("Added tree " + trie);
     this.radixTries.put(trie.getMetaData().getId(), trie);
   }
 
   public void deleteRadixTrie(UUID uuid) {
     R trie = this.radixTries.remove(uuid);
+    if (trie == null) {
+      return;
+    }
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (trie) {
       trie.delete();
@@ -79,13 +81,38 @@ public class RadixManager<R extends RadixTrie<?,?,?,?,?>> {
 
     String[] directories = file.list((file1, s) -> new File(file1, s).isDirectory());
 
-    assert directories != null;
-    for (String dirName : directories) {
-      if (dirName.startsWith("trie-")) {
-        System.out.println(rootPath.resolve(dirName));
-        DiskBasedRadixTrie trie = new DiskBasedRadixTrie(rootPath.resolve(dirName));
-        //noinspection unchecked
-        this.addRadixTrie((R) trie);
+    if (directories != null) {
+      for (String dirName : directories) {
+        if (dirName.startsWith("trie-")) {
+          DiskBasedRadixTrie trie;
+          try {
+            trie = new DiskBasedRadixTrie(rootPath.resolve(dirName));
+            //noinspection unchecked
+            this.addRadixTrie((R) trie);
+          } catch (AssertionError error) {
+            LOGGER.error("Could not instantiate trie: " + error);
+
+            try {
+              boolean isWindows = System.getProperty("os.name")
+                  .toLowerCase().startsWith("windows");
+
+              ProcessBuilder builder = new ProcessBuilder();
+              if (isWindows) {
+                builder.command("cmd.exe", "/c", "rmdir", "/s", "/q", "\""+rootPath.resolve(dirName).toString()+"\"");
+              } else {
+                builder.command("sh", "-c", "rm -rf " +rootPath.resolve(dirName).toString());
+              }
+              builder.directory(new File(System.getProperty("user.home")));
+              builder.redirectOutput(Redirect.DISCARD);
+              builder.redirectError(Redirect.DISCARD);
+              Process process = builder.start();
+              LOGGER.info("Deleting trie " + rootPath.resolve(dirName));
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+
+          }
+        }
       }
     }
   }
@@ -127,6 +154,8 @@ public class RadixManager<R extends RadixTrie<?,?,?,?,?>> {
 
     DiskBasedRadixTrie trie = new DiskBasedRadixTrie(triePath, date, uuid);
 
+    LOGGER.info("Added trie " + trie);
+
     //noinspection unchecked
     this.radixTries.put(uuid, (R) trie);
     return uuid;
@@ -151,9 +180,8 @@ public class RadixManager<R extends RadixTrie<?,?,?,?,?>> {
         return trie;
       }
     }
-    // TODO log this
-    //throw new RuntimeException("No current trie found");
 
+    LOGGER.error("There is no trie for the current time!");
     return getTries().values().stream().findFirst().orElse(null);
 
   }

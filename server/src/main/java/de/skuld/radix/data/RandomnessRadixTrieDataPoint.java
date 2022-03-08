@@ -8,7 +8,6 @@ import de.skuld.radix.AbstractRadixTrieDataPoint;
 import de.skuld.util.ConfigurationHelper;
 import de.skuld.util.WrappedByteBuffers;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
 import java.util.Arrays;
 
 public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byte[]> {
@@ -149,7 +148,6 @@ public class RandomnessRadixTrieDataPoint extends AbstractRadixTrieDataPoint<byt
   }
 
   public void serialize(ByteBuffer writeBuffer, int index) {
-    //System.out.println("serialize dp " + index);
     if (buffers != null) {
       byte[] array = buffers.get(bufferIndex);
 

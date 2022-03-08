@@ -1,12 +1,8 @@
 package de.skuld.util;
 
-import com.google.common.primitives.Ints;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.util.Arrays;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.IntStream;
-import org.apache.commons.lang3.tuple.Pair;
 
 /**
  * Wrapper class to sort arrays and treat chunks of array elements as single elements for comparison
@@ -57,7 +53,8 @@ public class WrappedByteBuffers {
   public byte[] get(int index) {
     byte[] result = new byte[chunkSize];
 
-    dataArray[getIndexOfMBB(index)].position(getOffsetInMBB(index) * chunkSize).get(result);
+    // duplicate so this is practically an absolute get
+    dataArray[getIndexOfMBB(index)].duplicate().position(getOffsetInMBB(index) * chunkSize).get(result);
 
     return result;
   }
@@ -125,7 +122,7 @@ public class WrappedByteBuffers {
       this.helper = new int[indexArray.length];
     }
 
-    final ForkJoinPool forkJoinPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors() - 2);
+    final ForkJoinPool forkJoinPool = new ForkJoinPool(Math.max(1, Runtime.getRuntime().availableProcessors() - 2));
     forkJoinPool.invoke(new ParallelMergeSort(this, indexArray, helper, firstBytes, 0, elementCount-1));
   }
 

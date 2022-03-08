@@ -2,8 +2,6 @@ package de.skuld.radix;
 
 import com.google.common.collect.BiMap;
 import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

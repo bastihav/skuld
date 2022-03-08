@@ -18,19 +18,18 @@ public class CBCIVPreProcessor implements PreProcessor {
     inputCopy.removeIf(bytes -> bytes.length != 16);
 
     result.getTlsTests().setAllZeroIV(inputCopy.size() > 0 && inputCopy.stream().allMatch(this::allZero));
-    result.getTlsTests().setReusesIV(inputCopy.size() > 0 && reusesRandom(inputCopy, result.getTlsTests().isUnixtime()));
+    result.getTlsTests().setReusesIV(inputCopy.size() > 0 && reusesRandom(inputCopy));
 
     return inputCopy;
   }
 
-  private boolean reusesRandom(List<byte[]> randoms, boolean usesUnixTime) {
+  private boolean reusesRandom(List<byte[]> randoms) {
     if (randoms.size() == 0) return false;
-    int start = usesUnixTime ? 4 : 0;
 
     for (int i = 0; i < randoms.size(); i++) {
       for (int i1 = i; i1 < randoms.size(); i1++) {
         if (i == i1) continue;
-        boolean reused = Arrays.equals(randoms.get(i), start, 32, randoms.get(i1), start, 32);
+        boolean reused = Arrays.equals(randoms.get(i), 0, 16, randoms.get(i1), 0, 16);
         if (reused) return true;
       }
     }

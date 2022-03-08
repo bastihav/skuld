@@ -3,7 +3,6 @@ package de.skuld.radix.manager;
 import de.skuld.radix.RadixTrie;
 import de.skuld.radix.RadixTrieStatus;
 import de.skuld.util.ConfigurationHelper;
-import java.lang.reflect.Array;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -58,10 +57,6 @@ public class RadixUpdaterThread<T extends RadixTrie<?,?,?,?,?>> extends Thread {
         if (latestSeed <= Instant.now().getEpochSecond()) {
           // no fresh data in this trie, delete it!
           radixManager.deleteRadixTrie(trie.getMetaData().getId());
-          System.out.println("deleting old radix trie!");
-          System.out.println("latest seed: " + latestSeed);
-          System.out.println("now: " + Instant.now().getEpochSecond());
-          System.out.println("earliest seed: " + earliestSeed);
         }
 
         if (earliestSeed <= Instant.now().getEpochSecond()) {
@@ -71,13 +66,10 @@ public class RadixUpdaterThread<T extends RadixTrie<?,?,?,?,?>> extends Thread {
             continue;
           }
 
-          System.out.println("creating new radix trie!");
           UUID newUuid = radixManager.createNewDiskBasedRadixTrie(new Date(d.getTime() + unixTime*1000L));
 
-          System.out.println("now generating new trie!");
           Thread creatorThread = new Thread(() -> {
             radixManager.generateTrie(newUuid);
-            System.out.println("created new trie");
           });
           creatorThread.start();
           try {

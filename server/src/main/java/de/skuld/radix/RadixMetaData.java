@@ -1,9 +1,6 @@
 package de.skuld.radix;
 
-import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 import de.skuld.web.model.MetaData;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
@@ -21,6 +18,15 @@ public class RadixMetaData {
 
   public RadixMetaData(MetaData metaData) {
     this(UUID.fromString(metaData.getUuid()), Date.from(Instant.parse(metaData.getDate())), RadixTrieStatus.valueOf(metaData.getStatus()));
+  }
+
+  @Override
+  public String toString() {
+    return "RadixMetaData{" +
+        "id=" + id +
+        ", date=" + date +
+        ", status=" + status +
+        '}';
   }
 
   public MetaData toAPIMetaData() {

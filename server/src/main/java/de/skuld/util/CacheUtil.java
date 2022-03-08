@@ -1,8 +1,6 @@
 package de.skuld.util;
 
 import com.google.common.primitives.UnsignedBytes;
-import de.skuld.radix.AbstractRadixTrieDataPoint;
-import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
 import java.util.Arrays;
 
 public class CacheUtil {

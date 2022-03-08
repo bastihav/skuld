@@ -1,11 +1,8 @@
 package de.skuld.web.model;
 
-import java.util.Objects;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
 import org.springframework.validation.annotation.Validated;
-import javax.validation.Valid;
-import javax.validation.constraints.*;
 
 /**
  * RandomnessQuery

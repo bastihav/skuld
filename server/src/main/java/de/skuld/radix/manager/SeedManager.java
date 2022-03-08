@@ -1,5 +1,6 @@
 package de.skuld.radix.manager;
 
+import com.google.common.primitives.Longs;
 import de.skuld.prng.PRNG;
 import de.skuld.util.ConfigurationHelper;
 import java.util.Arrays;
@@ -7,15 +8,16 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.IntStream;
 import java.util.stream.LongStream;
+import org.apache.commons.lang3.ArrayUtils;
 
 public class SeedManager {
 
   private static final int UNIX_TIME_TO_GENERATE = ConfigurationHelper.getConfig().getInt("radix.prng.unix");
-  private final RNGManager rngManager;
+  private long[] seeds = null;
 
-  public SeedManager(RNGManager rngManager) {
-    this.rngManager = rngManager;
+  public SeedManager() {
   }
 
   /**
@@ -23,15 +25,22 @@ public class SeedManager {
    *
    * @return seed array
    */
-  // TODO
   public long[] getSeeds(Date scanDate) {
-    long[] unixSeeds = getUnixSeeds(scanDate);
-    long[] defaultSeeds = getDefaultSeeds();
-    long[] badSeeds = badSeeds();
+    if (seeds == null) {
+      long[] unixSeeds = getUnixSeeds(scanDate);
+      long[] defaultSeeds = getDefaultSeeds();
+      long[] badSeeds = badSeeds();
+      long[] pids = processIds();
 
-    return LongStream
-        .concat(LongStream.concat(Arrays.stream(unixSeeds), Arrays.stream(defaultSeeds)),
-            Arrays.stream(badSeeds)).distinct().toArray();
+      seeds =  Arrays.stream(Longs.concat(unixSeeds, defaultSeeds, badSeeds, pids)).distinct().toArray();
+    }
+
+    return seeds;
+  }
+
+  public long[] processIds() {
+    // 32 bit systems have default max pid of 2^15
+    return LongStream.rangeClosed(0, (int) Math.pow(2,15)).toArray();
   }
 
   /**
@@ -39,9 +48,8 @@ public class SeedManager {
    *
    * @return
    */
-  // TODO
   private long[] badSeeds() {
-    return new long[]{0};
+    return new long[]{0,1,2,3,4,5,6,7,8,9, Long.MAX_VALUE};
   }
 
   /**
@@ -64,14 +72,14 @@ public class SeedManager {
   }
 
   private long[] getDefaultSeeds() {
-    Collection<Class<? extends PRNG>> prngs = rngManager.getPRNGs();
+    Collection<Class<? extends PRNG>> prngs = RNGManager.getPRNGs();
 
     Set<Long> seeds = new HashSet<>(prngs.size());
 
     prngs.forEach(prng -> {
       try {
-        seeds.add(prng.getConstructor(long.class).newInstance(0).usesUnixTimeAsDefault() ? 0
-            : prng.getConstructor(long.class).newInstance(0).getDefaultSeed());
+        seeds.add(prng.getConstructor(long.class).newInstance(Long.MAX_VALUE).usesUnixTimeAsDefault() ? 0
+            : prng.getConstructor(long.class).newInstance(Long.MAX_VALUE).getDefaultSeed());
       } catch (Exception e) {
         e.printStackTrace();
       }

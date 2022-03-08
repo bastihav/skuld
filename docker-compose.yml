@@ -1,11 +1,13 @@
 version: "3.8"
 services:
   skuld:
+    image: bastihav/skuld:latest
     build: ./server
     ports:
       - "8080:8080"
     volumes:
       - G:/skuld:/trees
+    #command: -c "<path to config file>"
   proxy:
     image: nginx:latest
     ports:

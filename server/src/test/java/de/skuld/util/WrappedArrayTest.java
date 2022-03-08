@@ -27,8 +27,6 @@ public class WrappedArrayTest {
     int remainingOnDisk = ConfigurationHelper.getConfig().getInt("radix.disk_based.hardware_cache.serialized.remaining");
     final int maxPartitionBytesInArray = Integer.MAX_VALUE - (Integer.MAX_VALUE % sizeOnDisk);
 
-    // TODO array might be bigger than necessary!
-    //byte[] array = new byte[maxPartitionBytesInArray];
     int elementCount = 0;
 
     try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(), EnumSet.of(
@@ -36,33 +34,24 @@ public class WrappedArrayTest {
       int reads = (int) Math.ceil(((double) fileChannel.size() / maxPartitionBytesInArray));
 
       MappedByteBuffer[] buffers =  new MappedByteBuffer[reads];
-      System.out.println("reading x" + reads);
+
       for (int i = 0; i < reads; i++) {
         long offset = (long) i * maxPartitionBytesInArray;
         long remaining = Math.min(fileChannel.size() - offset, maxPartitionBytesInArray);
 
-        long ping = System.nanoTime();
-        System.out.println("reading " + remaining + " bytes");
         MappedByteBuffer mappedByteBuffer = fileChannel.map(MapMode.READ_ONLY, offset, remaining);
         elementCount += (int) (remaining / sizeOnDisk);
         mappedByteBuffer.load();
-        //mappedByteBuffer.get(array);
+
         buffers[i] = mappedByteBuffer;
-        long pong = System.nanoTime();
-        System.out.println("read #" + i + " (#" + ((int)remaining / sizeOnDisk) + " elements) in " + (pong-ping) + " ns");
 
-
-        //break;
-        //return;
       }
-      long ping = System.nanoTime();
+
       WrappedByteBuffers wrappedArray = new WrappedByteBuffers(buffers, sizeOnDisk, elementCount, remainingOnDisk);
 
       wrappedArray.sort();
-      long pong = System.nanoTime();
-      System.out.println("sorted #" + elementCount + " elements in " + (pong-ping) + " ns");
 
-      System.out.println("validity:");
+
       for (int i = 0; i < 10; i++) {
         ByteHexUtil.printBytesAsHex(wrappedArray.get(wrappedArray.getIndexArray()[i]));
       }

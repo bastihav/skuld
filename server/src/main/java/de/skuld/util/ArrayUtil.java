@@ -3,6 +3,13 @@ package de.skuld.util;
 import java.util.Arrays;
 
 public class ArrayUtil {
+
+  /**
+   * Returns -1, if subarray is not a subarry of array, returns the index of the first byte else
+   * @param array
+   * @param subarray
+   * @return
+   */
   public static int isSubArray(byte[] array, byte[] subarray) {
     if (array.length < subarray.length) {
       return -1;

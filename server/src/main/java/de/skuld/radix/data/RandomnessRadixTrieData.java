@@ -71,7 +71,6 @@ public class RandomnessRadixTrieData extends
 
   @Override
   public void serialize(ByteBuffer mappedByteBuffer, int offset) {
-    //System.out.println("serialize data " + offset);
     int partitionSizeOnDisk = ConfigurationHelper.getConfig().getInt("radix.partition.serialized");
     AtomicInteger index = new AtomicInteger(offset);
     dataPoints.forEach(dp -> dp.serialize(mappedByteBuffer, index.getAndAdd(partitionSizeOnDisk)));

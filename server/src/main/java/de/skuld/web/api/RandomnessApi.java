@@ -16,8 +16,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import javax.annotation.processing.Generated;
 import javax.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -28,11 +30,10 @@ public interface RandomnessApi {
 
     @Operation(summary = "analyzes randomness", description = "Randomness submitted to this endpoint will be analyzed. Statistical tests will be performed and we will try to solve for a PRNG and seed combination", tags={ "Public API" })
     @ApiResponses(value = { 
-        @ApiResponse(responseCode = "200", description = "analysis results", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Result.class))) })
-    @RequestMapping(value = "/randomness",
-        produces = { "application/json" }, 
-        consumes = { "application/json" }, 
-        method = RequestMethod.POST)
+        @ApiResponse(responseCode = "200", description = "analysis results", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = Result.class))) })
+    @PostMapping(value = "/randomness",
+        produces = {MediaType.APPLICATION_JSON_VALUE},
+        consumes = {MediaType.APPLICATION_JSON_VALUE})
     ResponseEntity<Result> analyzeRandomness(@Parameter(in = ParameterIn.DEFAULT, description = "randomness to be analyzed", required=true, schema=@Schema()) @Valid @RequestBody RandomnessQuery body);
 
 }

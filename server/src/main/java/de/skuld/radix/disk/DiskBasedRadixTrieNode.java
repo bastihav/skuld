@@ -11,7 +11,6 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collection;
@@ -20,11 +19,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class DiskBasedRadixTrieNode extends
     AbstractRadixTrieNode<DiskBasedRandomnessRadixTrieData, byte[], RandomnessRadixTrieDataPoint, PathRadixTrieEdge> implements
     RadixTrieNode<DiskBasedRandomnessRadixTrieData, PathRadixTrieEdge> {
 
+  private static final Logger LOGGER = LogManager.getLogger();
   private final Path p;
   private final DiskBasedRadixTrie trie;
 
@@ -81,7 +83,7 @@ public class DiskBasedRadixTrieNode extends
         StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE))) {
       long readSizeInBytes = fileChannel.size();
       if (readSizeInBytes != 0) {
-        System.out.println("File Should be empty");
+        LOGGER.error("Leaf file at " + p + " not empty");
       }
 
       long writeSize = (long) this.data.getElementCount() * sizeOnDisk;
@@ -106,7 +108,6 @@ public class DiskBasedRadixTrieNode extends
     return Arrays.stream(Objects.requireNonNull(p.toFile().list())).map(pathName -> {
 
       if (pathName.endsWith(ConfigurationHelper.getConfig().getString("radix.leaf.file_name"))) {
-        //System.out.println("this is the path name " + pathName);
         PathRadixTrieEdge edge = new PathRadixTrieEdge(new String[0],
             new DiskBasedRadixTrieNode(false, null, p.resolve(pathName), trie),
             p.resolve(pathName));

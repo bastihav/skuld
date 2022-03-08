@@ -1,6 +1,8 @@
 package de.skuld.util;
 
 import com.google.common.primitives.Longs;
+import de.skuld.prng.ImplementedPRNGs;
+import de.skuld.prng.PRNG;
 import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
 import de.skuld.radix.disk.DiskBasedRadixTrie;
 import de.skuld.solvers.JavaRandomSolver;
@@ -11,67 +13,104 @@ import de.skuld.web.model.Result;
 import de.skuld.web.model.ResultPairs;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ThreadPoolExecutor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class AnalysisUtil {
+
+  private static final Logger LOGGER = LogManager.getLogger();
+
   public static void analyzeWithPrecomputations(DiskBasedRadixTrie radixTrie,
-      List<byte[]> randomness, Result result, TypeEnum type) {
-    // TODO do this in different thread
-    List<RandomnessRadixTrieDataPoint> dp = new ArrayList<>(randomness.size());
+      List<byte[]> randomness, Result result, TypeEnum type,
+      ThreadPoolExecutor threadPoolExecutor) {
+    if (randomness.size() == 0) {
+      return;
+    }
 
     for (byte[] arr : randomness) {
-      radixTrie.search(arr).ifPresent(dp::add);
-    }
+      threadPoolExecutor.execute(() -> {
+        Optional<RandomnessRadixTrieDataPoint> optionalDataPoint = radixTrie.search(arr);
 
-    boolean sameSeeds = dp.stream().map(RandomnessRadixTrieDataPoint::getSeedIndex).distinct().count() == 1;
-    boolean sameRNG =  dp.stream().map(RandomnessRadixTrieDataPoint::getRng).distinct().count() == 1;
-
-    // we need to find datapoints for all randomness
-    if (sameSeeds && sameRNG && dp.size() == randomness.size()) {
-      long current = -1;
-
-      for (RandomnessRadixTrieDataPoint p : dp) {
-        long seedIndex = p.getSeedIndex();
-        if (seedIndex > current) {
-          current = seedIndex;
-        } else {
-          current = Long.MAX_VALUE;
-          break;
+        if (optionalDataPoint.isPresent()) {
+          // verify quickly
+          RandomnessRadixTrieDataPoint dataPoint = optionalDataPoint.get();
+          PRNG instance = ImplementedPRNGs.getPRNG(dataPoint.getRng(),
+              radixTrie.getSeedMap().get(dataPoint.getSeedIndex()));
+          if (verifyPrecomputationsMatch(randomness, dataPoint.getByteIndexInRandomness(),
+              instance)) {
+            ResultPairs pair = new ResultPairs();
+            pair.setSeeds(new ArrayList<>());
+            pair.addSeedsItem(
+                Longs.toByteArray(radixTrie.getSeedMap().get(dataPoint.getSeedIndex())));
+            pair.setPrng(dataPoint.getRng().toString());
+            pair.setType(type);
+            result.addPairsItem(pair);
+            LOGGER.info("precomp done");
+          }
         }
-      }
+      });
+    }
+    LOGGER.info("precomp done");
+  }
 
-      if (current != Long.MAX_VALUE) {
-        // increasing seed indices! This is a match!
-        ResultPairs pair = new ResultPairs();
-        pair.addSeedsItem(Longs.toByteArray(radixTrie.getSeedMap().get(dp.get(0).getSeedIndex())));
-        pair.setPrng(dp.get(0).getRng().toString());
-        pair.setType(type);
+  private static boolean verifyPrecomputationsMatch(List<byte[]> randomness, int byteIndex,
+      PRNG instance) {
+    int verifySize = ConfigurationHelper.getConfig().getInt("radix.precomputations.verify_size");
 
-        result.addPairsItem(pair);
+    int startIndex = Math.max(0, byteIndex - verifySize);
+    int endIndex = byteIndex + verifySize;
+    int length = endIndex - startIndex;
+
+    byte[] bytes = instance.getBytes(startIndex, length);
+
+    int lastIndex = -1;
+    // TODO this is slow
+    for (byte[] value : randomness) {
+      int index = ArrayUtil.isSubArray(bytes, value);
+      if (index < lastIndex || index == -1) {
+        return false;
+      } else {
+        lastIndex = index;
       }
     }
+
+    return lastIndex > -1;
   }
 
   public static void analyzeWithSolvers(List<byte[]> randomness, Result result,
-      TypeEnum type) {
+      TypeEnum type, ThreadPoolExecutor threadPoolExecutor) {
     Solver[] solvers = new Solver[]{new JavaRandomSolver(), new XoShiRo128StarStarSolver()};
 
-    // TODO do this in different threads
-    for (Solver solver : solvers) {
-      ResultPairs pair = new ResultPairs();
-      pair.setPrng(solver.getPrng().toString());
-      pair.setType(type);
-
-      List<byte[]> possibleSeeds = solver.solve(randomness.get(0));
-
-      for (byte[] possibleSeed : possibleSeeds) {
-        if (solver.verify(randomness, possibleSeed)) {
-          pair.addSeedsItem(possibleSeed);
-        }
-      }
-      if (pair.getSeeds().size() > 0) {
-        result.addPairsItem(pair);
-      }
+    if (randomness.size() == 0) {
+      return;
     }
+
+    for (Solver solver : solvers) {
+      if (!solver.solveable(randomness.get(0))) {
+        continue;
+      }
+
+      threadPoolExecutor.execute(() -> {
+        ResultPairs pair = new ResultPairs();
+        pair.setSeeds(new ArrayList<>());
+        pair.setPrng(solver.getPrng().toString());
+        pair.setType(type);
+
+        List<byte[]> possibleSeeds = solver.solve(randomness.get(0));
+
+        for (byte[] possibleSeed : possibleSeeds) {
+          if (solver.verify(randomness, possibleSeed)) {
+            pair.addSeedsItem(possibleSeed);
+          }
+        }
+        if (pair.getSeeds().size() > 0) {
+          result.addPairsItem(pair);
+        }
+      });
+    }
+    LOGGER.info("solver done");
   }
 
 }

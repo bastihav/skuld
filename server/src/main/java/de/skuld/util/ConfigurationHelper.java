@@ -1,17 +1,15 @@
 package de.skuld.util;
 
+import de.skuld.radix.manager.RNGManager;
+import de.skuld.radix.manager.SeedManager;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Date;
 import java.util.Iterator;
-import java.util.Objects;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.FileBasedConfiguration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
@@ -54,44 +52,8 @@ public class ConfigurationHelper {
     if (file != null) {
       if (file.exists()) {
         config = builder.getConfiguration();
-        builder = new FileBasedConfigurationBuilder<FileBasedConfiguration>(
-            PropertiesConfiguration.class)
-            .configure(params.properties()
-                .setFile(file)
-                .setListDelimiterHandler(new DefaultListDelimiterHandler(',')));
-
-        Configuration localConfig = builder.getConfiguration();
-        for (Iterator<String> it = localConfig.getKeys(); it.hasNext(); ) {
-          String key = it.next();
-          config.setProperty(key, localConfig.getProperty(key));
-        }
-        return;
       }
     }
-
-    /*try {
-      config = builder.getConfiguration();
-
-      // Load external configuration file
-      Path home = Paths.get(System.getProperty("user.home"), config.getString("home.folder"),
-          "Configuration.properties");
-
-      if (home.toFile().exists()) {
-        builder = new FileBasedConfigurationBuilder<FileBasedConfiguration>(
-            PropertiesConfiguration.class)
-            .configure(params.properties()
-                .setFile(home.toFile())
-                .setListDelimiterHandler(new DefaultListDelimiterHandler(',')));
-
-        Configuration localConfig = builder.getConfiguration();
-        for (Iterator<String> it = localConfig.getKeys(); it.hasNext(); ) {
-          String key = it.next();
-          config.setProperty(key, localConfig.getProperty(key));
-        }
-      }
-    } catch (ConfigurationException e) {
-      e.printStackTrace();
-    }*/
   }
 
   public static Configuration getConfig() {
@@ -99,5 +61,37 @@ public class ConfigurationHelper {
       loadDefaultConfig();
     }
     return config;
+  }
+
+  public static long calculateDiskSpacePerTree() {
+    long seeds = new SeedManager().getSeeds(new Date()).length;
+    long prngs = RNGManager.getPRNGs().size();
+
+    // 4 kiByte
+    int fileOverhead = 4096;
+
+    // 256 byte
+    int iNodeOverhead = 256;
+
+    int maxHeight = getConfig().getInt("radix.height.max");
+    int partitionSize = getConfig().getInt("radix.partition.size");
+    int bytesPerPrng = config.getInt("radix.prng.amount");
+    int partitionOnDisk = getConfig().getInt("radix.partition.serialized");
+
+    long result = 0;
+
+    // leaf file overhead
+    result += Math.pow(256, maxHeight) * (fileOverhead + iNodeOverhead);
+
+    // leaf file contents
+    long amountOfPartitions = prngs * seeds * bytesPerPrng / partitionSize;
+    result += amountOfPartitions * partitionOnDisk;
+
+    // directories
+    for (int i = 0; i <= maxHeight; i++) {
+      result += Math.pow(256, i) * (fileOverhead + iNodeOverhead);
+    }
+
+    return result;
   }
 }

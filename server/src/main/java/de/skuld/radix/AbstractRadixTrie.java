@@ -2,7 +2,6 @@ package de.skuld.radix;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
 import de.skuld.util.ConfigurationHelper;
 import java.util.Arrays;
 import java.util.Collection;
@@ -77,7 +76,6 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
     String[] coveredEdges = parent.getPathFromRoot();
 
     if (parent.isLeafNode() && parent != root) {
-      System.out.println("merging under " + Arrays.toString(coveredEdges));
       return parent.mergeNodes(data);
     }
 
@@ -243,20 +241,15 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
     int partitionSize = ConfigurationHelper.getConfig().getInt("radix.partition.size");
 
     // TODO if we shift too often, we have to many partial matches which tanks our performance
-    for (int i = 0; i < partitionSize-5; i++) {
+    for (int i = 0; i < partitionSize-26; i++) {
       // shift
       I shiftedIndexingData = shiftIndexingData(indexingData, i);
       I discardedIndexingData = getDiscardedIndexingData(indexingData, i);
-
-      System.out.println("this search is with " +((byte[]) shiftedIndexingData).length);
 
       // search
       Optional<N> node =  getNode(shiftedIndexingData);
       Collection<P> dataPoints = node.isPresent() && node.get().isLeafNode() ?
           node.get().getData().getDataPoints(shiftedIndexingData) : Collections.emptyList();
-
-      System.out.println("node present?: " + node.isPresent());
-      System.out.println("dataPoints with shifted indexing data?: " + dataPoints.size());
 
       // check
       for (P dataPoint : dataPoints) {
