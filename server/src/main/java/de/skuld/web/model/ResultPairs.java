@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.skuld.web.model.RandomnessQueryInner.TypeEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import javax.validation.Valid;
@@ -109,14 +110,24 @@ public class ResultPairs {
       return false;
     }
     ResultPairs resultPairs = (ResultPairs) o;
+
+    boolean arraysEqual = true;
+    if (seeds.size() == resultPairs.seeds.size()) {
+      for (int i = 0; i < seeds.size(); i++) {
+        arraysEqual &= Arrays.equals(seeds.get(i), resultPairs.seeds.get(i));
+      }
+    } else {
+      arraysEqual = false;
+    }
+
     return Objects.equals(this.type, resultPairs.type) &&
-        Objects.equals(this.seeds, resultPairs.seeds) &&
+        arraysEqual &&
         Objects.equals(this.prng, resultPairs.prng);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, seeds, prng);
+    return Objects.hash(type, prng) * Arrays.deepHashCode(seeds.toArray());
   }
 
   @Override
