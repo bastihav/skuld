@@ -19,13 +19,13 @@ public class JavaRandomSolver implements Solver {
   }
 
   @Override
-  public int getConsecutiveBitsNeeded() {
-    return Integer.SIZE * 4;
+  public int getConsecutiveBytesNeeded() {
+    return Integer.BYTES * 4;
   }
 
   @Override
   public List<byte[]> solve(byte[] input) {
-    if (input.length < getConsecutiveBitsNeeded() / Byte.SIZE) {
+    if (input.length < getConsecutiveBytesNeeded() / Byte.SIZE) {
       throw new AssertionError("Input too small!");
     }
 

@@ -13,7 +13,7 @@ public interface Solver {
    *
    * @return number of bits
    */
-  int getConsecutiveBitsNeeded();
+  int getConsecutiveBytesNeeded();
 
   /**
    * Method that solves the PRNG, returning possible seeds for generating the input bytes
@@ -29,7 +29,7 @@ public interface Solver {
    * @return whether it is enough randomness
    */
   default boolean solveable(byte[] input) {
-    return input != null && input.length > getConsecutiveBitsNeeded();
+    return input != null && input.length > getConsecutiveBytesNeeded();
   }
 
   /**

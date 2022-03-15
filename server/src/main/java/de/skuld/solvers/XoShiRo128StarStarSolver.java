@@ -8,6 +8,7 @@ import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -92,8 +93,8 @@ public class XoShiRo128StarStarSolver implements Solver {
   }
 
   @Override
-  public int getConsecutiveBitsNeeded() {
-    return Integer.SIZE * 4;
+  public int getConsecutiveBytesNeeded() {
+    return Integer.BYTES * 4;
   }
 
   @Override

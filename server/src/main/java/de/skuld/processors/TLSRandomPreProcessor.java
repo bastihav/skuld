@@ -83,9 +83,10 @@ public class TLSRandomPreProcessor implements PreProcessor {
   private byte[] removeNonRandom(byte[] input, boolean hasUnix) {
     int start = hasUnix ? 4 : 0;
     int end = hasFallbackProtection(input) ? 24 : 32;
+    int length = end-start;
 
-    byte[] result = new byte[end - start];
-    System.arraycopy(input, start, result, 0, end);
+    byte[] result = new byte[length];
+    System.arraycopy(input, start, result, 0, length);
     return result;
   }
 
