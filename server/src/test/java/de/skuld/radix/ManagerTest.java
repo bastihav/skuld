@@ -15,10 +15,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled
 public class ManagerTest {
 
   @Test
-  @Disabled
   public void test() {
     RadixManager<DiskBasedRadixTrie> radixManager = RadixManager.getInstance(Paths.get("G:\\skuld\\"));
     UUID uuid = radixManager.createNewDiskBasedRadixTrie();

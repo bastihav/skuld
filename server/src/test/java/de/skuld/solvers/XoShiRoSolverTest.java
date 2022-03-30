@@ -35,6 +35,33 @@ public class XoShiRoSolverTest {
     Assertions.assertArrayEquals(originalState, state);
 
     Xoshiro128StarStar xoshiro128StarStar2 = new Xoshiro128StarStar(state);
+    byte[] trash = new byte[4 * Integer.BYTES];
+    byte[] actual = new byte[256];
+    xoshiro128StarStar2.nextBytes(trash);
+    xoshiro128StarStar2.nextBytes(actual);
+
+    Assertions.assertArrayEquals(expected, actual);
+  }
+
+  @Test
+  public void validateStateReconstructiontest() {
+
+    Xoshiro128StarStar xoshiro128StarStar = new Xoshiro128StarStar(1647155671L);
+
+    byte[] outputs = new byte[4 * Integer.BYTES];
+    byte[] expected = new byte[256];
+    xoshiro128StarStar.nextBytes(outputs);
+    xoshiro128StarStar.nextBytes(expected);
+
+    List<byte[]> possibleStates = new XoShiRo128StarStarSolver().solve(outputs);
+
+    ByteBuffer buffer = ByteBuffer.wrap(possibleStates.get(0));
+    int[] state = new int[4];
+    buffer.asIntBuffer().get(state);
+
+    //Assertions.assertArrayEquals(originalState, state);
+
+    Xoshiro128StarStar xoshiro128StarStar2 = new Xoshiro128StarStar(state);
 
     byte[] trash = new byte[4 * Integer.BYTES];
     byte[] actual = new byte[256];
