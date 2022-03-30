@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class CBCIVPreProcessor implements PreProcessor {
 
@@ -23,7 +24,8 @@ public class CBCIVPreProcessor implements PreProcessor {
         .setAllZeroIV(inputCopy.size() > 0 && inputCopy.stream().allMatch(this::allZero));
     result.getTlsTests().setReusesIV(inputCopy.size() > 0 && reusesRandom(inputCopy));
 
-    return inputCopy;
+    // TODO limit
+    return inputCopy.stream().limit(5).collect(Collectors.toList());
   }
 
   private boolean reusesRandom(List<byte[]> randoms) {

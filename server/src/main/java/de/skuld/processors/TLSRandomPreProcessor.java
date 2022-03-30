@@ -44,8 +44,9 @@ public class TLSRandomPreProcessor implements PreProcessor {
     result.getTlsTests().setReusesRandom(
         withoutHRR.size() > 0 && reusesRandom(withoutHRR, result.getTlsTests().isUnixtime()));
 
+    // TODO LIMIT
     return withoutHRR.stream().map(arr -> removeNonRandom(arr,
-        result.getTlsTests().isUnixtime())).collect(Collectors.toList());
+        result.getTlsTests().isUnixtime())).limit(5).collect(Collectors.toList());
   }
 
   private boolean reusesRandom(List<byte[]> randoms, boolean usesUnixTime) {

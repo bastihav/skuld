@@ -241,6 +241,7 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
     int partitionSize = ConfigurationHelper.getConfig().getInt("radix.partition.size");
 
     // TODO if we shift too often, we have to many partial matches which tanks our performance
+    //TODO shouldnt shift relative to partitionSize but to indexing data size
     for (int i = 0; i < partitionSize - 26; i++) {
       // shift
       I shiftedIndexingData = shiftIndexingData(indexingData, i);

@@ -15,6 +15,7 @@ public class SeedManager {
   private static final int UNIX_TIME_TO_GENERATE = ConfigurationHelper.getConfig()
       .getInt("radix.prng.unix");
   private long[] seeds = null;
+  private Date date;
 
   public SeedManager() {
   }
@@ -25,7 +26,7 @@ public class SeedManager {
    * @return seed array
    */
   public long[] getSeeds(Date scanDate) {
-    if (seeds == null) {
+    if (seeds == null || (!scanDate.equals(date))) {
       long[] unixSeeds = getUnixSeeds(scanDate);
       long[] defaultSeeds = getDefaultSeeds();
       long[] badSeeds = badSeeds();
@@ -33,6 +34,7 @@ public class SeedManager {
 
       seeds = Arrays.stream(Longs.concat(unixSeeds, defaultSeeds, badSeeds, pids)).distinct()
           .toArray();
+      date = scanDate;
     }
 
     return seeds;

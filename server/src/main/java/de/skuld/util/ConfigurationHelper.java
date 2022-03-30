@@ -9,6 +9,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.FileBasedConfiguration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
@@ -19,7 +21,7 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 
 public class ConfigurationHelper {
 
-  private static Configuration config;
+  private static ApacheConfigurationCacher config;
 
   public static void loadDefaultConfig() {
     try {
@@ -51,12 +53,12 @@ public class ConfigurationHelper {
 
     if (file != null) {
       if (file.exists()) {
-        config = builder.getConfiguration();
+        config = new ApacheConfigurationCacher(builder.getConfiguration());
       }
     }
   }
 
-  public static Configuration getConfig() {
+  public static ApacheConfigurationCacher getConfig() {
     if (config == null) {
       loadDefaultConfig();
     }
@@ -75,7 +77,7 @@ public class ConfigurationHelper {
 
     int maxHeight = getConfig().getInt("radix.height.max");
     int partitionSize = getConfig().getInt("radix.partition.size");
-    int bytesPerPrng = config.getInt("radix.prng.amount");
+    int bytesPerPrng = getConfig().getInt("radix.prng.amount");
     int partitionOnDisk = getConfig().getInt("radix.partition.serialized");
 
     long result = 0;

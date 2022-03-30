@@ -75,7 +75,7 @@ public class DiskBasedRadixTrie extends
   int byteIndexSizeOnDisk = ConfigurationHelper.getConfig()
       .getInt("radix.disk_based.hardware_cache.serialized.byte_index");
   int partitionSize = ConfigurationHelper.getConfig().getInt("radix.partition.size");
-  long amountPerPRNG = ConfigurationHelper.getConfig().getLong("radix.prng.amount");
+  long amountPerPRNG = ConfigurationHelper.getConfig().getInt("radix.prng.amount");
   // cache inserts add data-points to single data object, which will result in whole object writes
   private Map<ByteBuffer, Pair<DiskBasedRandomnessRadixTrieData, byte[]>> memoryCache;
   private Map<Byte, Collection<RandomnessRadixTrieDataPoint>> hardwareFillMemoryCache;
@@ -456,24 +456,13 @@ public class DiskBasedRadixTrie extends
     int byteIndex = dataPoint.getByteIndexInRandomness();
     ImplementedPRNGs prng = dataPoint.getRng();
 
-    Class<? extends PRNG> prngClass = ImplementedPRNGs.getPRNG(prng);
     long seed = seedMap.get(seedIndex);
+    PRNG instance = ImplementedPRNGs.getPRNG(prng, seed);
 
-    try {
-      assert prngClass != null;
-      PRNG instance = prngClass.getConstructor(long.class).newInstance(seed);
-      byte[] precedingBytes = instance.getBytes(byteIndex - discardedIndexingData.length,
-          discardedIndexingData.length);
+    byte[] precedingBytes = instance.getBytes(byteIndex - discardedIndexingData.length,
+        discardedIndexingData.length);
 
-      if (Arrays.equals(precedingBytes, discardedIndexingData)) {
-        return true;
-      }
-
-    } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
-      e.printStackTrace();
-    }
-
-    return false;
+    return Arrays.equals(precedingBytes, discardedIndexingData);
   }
 
   @Override
@@ -686,7 +675,7 @@ public class DiskBasedRadixTrie extends
     int threadsPerPrng = cores / RNGManager.getPRNGEnum()
         .size();
     LOGGER.info("Will start " + threadsPerPrng + " threads per PRNG");
-    int seedsLengthPerThread = seedMap.size() / Math.max(1, threadsPerPrng);
+    int seedsLengthPerThread = Math.max(1, seedMap.size() / Math.max(1, threadsPerPrng));
     LOGGER.info("Will allocate " + seedsLengthPerThread + " seeds per thread");
 
     for (ImplementedPRNGs prng : RNGManager.getPRNGEnum()) {

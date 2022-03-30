@@ -1,5 +1,6 @@
 package de.skuld.util;
 
+import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
 import de.skuld.prng.ImplementedPRNGs;
 import de.skuld.prng.PRNG;
@@ -47,17 +48,19 @@ public class AnalysisUtil {
             pair.setPrng(dataPoint.getRng().toString());
             pair.setType(type);
             result.addPairsItem(pair);
+            threadPoolExecutor.shutdownNow();
             LOGGER.info("precomp done");
+            return;
           }
         }
+        LOGGER.info("precomp done");
       });
     }
-    LOGGER.info("precomp done");
   }
 
   private static boolean verifyPrecomputationsMatch(List<byte[]> randomness, int byteIndex,
       PRNG instance) {
-    int verifySize = ConfigurationHelper.getConfig().getInt("radix.precomputations.verify_size");
+    int verifySize = ConfigurationHelper.getConfig().getInt("radix.solver.verify_size");
 
     int startIndex = Math.max(0, byteIndex - verifySize);
     int endIndex = byteIndex + verifySize;
@@ -65,18 +68,7 @@ public class AnalysisUtil {
 
     byte[] bytes = instance.getBytes(startIndex, length);
 
-    int lastIndex = -1;
-    // TODO this is slow
-    for (byte[] value : randomness) {
-      int index = ArrayUtil.isSubArray(bytes, value);
-      if (index < lastIndex || index == -1) {
-        return false;
-      } else {
-        lastIndex = index;
-      }
-    }
-
-    return lastIndex > -1;
+    return ArrayUtil.checkSubArraysInArraySequential(bytes, randomness);
   }
 
   public static void analyzeWithSolvers(List<byte[]> randomness, Result result,
@@ -107,6 +99,7 @@ public class AnalysisUtil {
         }
         if (pair.getSeeds().size() > 0) {
           result.addPairsItem(pair);
+          threadPoolExecutor.shutdownNow();
         }
       });
     }

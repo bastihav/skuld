@@ -44,17 +44,8 @@ public interface Solver {
     PRNG random = getPrngImpl(seed);
     byte[] someBytes = new byte[ConfigurationHelper.getConfig().getInt("radix.solver.verify_size")];
     random.nextBytes(someBytes);
-    int currentIndex = -1;
-    for (byte[] bytes : randoms) {
-      int index = ArrayUtil.isSubArray(someBytes, bytes);
-      if (index > currentIndex) {
-        currentIndex = index;
-      } else {
-        currentIndex = Integer.MAX_VALUE;
-      }
-    }
 
-    return currentIndex > -1 && currentIndex < Integer.MAX_VALUE;
+    return ArrayUtil.checkSubArraysInArraySequential(someBytes, randoms);
   }
 
   PRNG getPrngImpl(byte[] seed);

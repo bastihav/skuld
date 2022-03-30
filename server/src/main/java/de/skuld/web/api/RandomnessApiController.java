@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -98,7 +99,7 @@ public class RandomnessApiController implements RandomnessApi {
     long ping = System.nanoTime();
     // TODO add time keeping!
     Result result = new Result();
-    result.setPairs(new ArrayList<>());
+    result.setPairs(Collections.synchronizedList(new ArrayList<>()));
     result.setTlsTests(new ResultTlsTests());
 
     DiskBasedRadixTrie radixTrie = radixManager.getTrie();
@@ -130,9 +131,9 @@ public class RandomnessApiController implements RandomnessApi {
         }
 
         List<byte[]> finalRandomness = randomness;
-        StringBuilder sb = new StringBuilder("analyze the randomness ");
+/*        StringBuilder sb = new StringBuilder("analyze the randomness ");
         randomness.forEach(arr -> sb.append(ByteHexUtil.bytesToHex(arr)).append("\n"));
-        System.out.println(sb);
+        System.out.println(sb);*/
 
         List<List<byte[]>> rand = new ArrayList<>();
         rand.add(finalRandomness);
@@ -183,21 +184,37 @@ public class RandomnessApiController implements RandomnessApi {
         rand.add(flipped);
 
         for (List<byte[]> bytes : rand) {
+          AnalysisUtil.analyzeWithSolvers(bytes, result, randomnessQueryInner.getType(),
+              threadPoolExecutor);
           if (radixTrie != null) {
             AnalysisUtil.analyzeWithPrecomputations(radixTrie, bytes, result,
                 randomnessQueryInner.getType(), threadPoolExecutor);
           }
-          AnalysisUtil.analyzeWithSolvers(bytes, result, randomnessQueryInner.getType(),
-              threadPoolExecutor);
         }
       });
     }
+
     try {
-      Thread.sleep(100);
-      threadPoolExecutor.shutdown();
+      int MILLISECONDS = 5000;
       LOGGER.info("Waiting for threads now");
-      boolean finishedGracefully = threadPoolExecutor.awaitTermination(5, TimeUnit.SECONDS);
-      LOGGER.info("Threads finished before timeout? " + finishedGracefully);
+      while(MILLISECONDS > 0) {
+        if (result.getPairs().size() > 0) {
+          // TODO this shut downs for all queries, not just "serverRandom" or "cbc" -> need to seperate
+          // want to continue searching for IV, even if we found random
+          // TODO we could rescan for all where we found one match, i.e. early stopped
+          threadPoolExecutor.shutdownNow();
+          boolean terminated = threadPoolExecutor.awaitTermination(50, TimeUnit.MILLISECONDS);
+          if (!terminated) {
+            threadPoolExecutor.shutdownNow();
+          }
+          break;
+        } else {
+         MILLISECONDS -= 100;
+         Thread.sleep(100);
+        }
+      }
+
+      LOGGER.info("Threads killed? " + threadPoolExecutor.isTerminated());
     } catch (InterruptedException e) {
       e.printStackTrace();
     }

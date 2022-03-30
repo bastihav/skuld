@@ -22,6 +22,6 @@ public class ByteHexUtil {
   }
 
   public static byte[] hexToByte(String hex) {
-    return DatatypeConverter.parseHexBinary(hex);
+    return DatatypeConverter.parseHexBinary(hex.replace(" ",""));
   }
 }
