@@ -64,7 +64,7 @@ dependencies {
     implementation group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.4'
     implementation group: 'commons-cli', name: 'commons-cli', version: '1.5.0'
 
-    implementation 'com.google.code.gson:gson:2.8.9'
+    implementation 'com.google.code.gson:gson:2.9.0'
     implementation group: 'com.github.f4b6a3', name: 'uuid-creator', version: '4.3.1'
     // java solver
     implementation 'com.github.rayferric:regen:1.0.1'
