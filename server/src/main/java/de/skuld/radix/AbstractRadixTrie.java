@@ -2,11 +2,13 @@ package de.skuld.radix;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import de.skuld.radix.data.RandomnessRadixTrieDataPoint;
 import de.skuld.util.ConfigurationHelper;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
 import java.util.Optional;
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +19,42 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
   private static final Logger LOGGER = LogManager.getLogger();
   protected final BiMap<Integer, Long> seedMap = HashBiMap.create();
   protected N root = getDummyNode();
+  protected RadixMetaData metaData = new RadixMetaData();
+
+  public AbstractRadixTrie() {
+    this.metaData.setDate(new Date());
+    this.metaData.setId(UUID.randomUUID());
+    this.metaData.setStatus(RadixTrieStatus.CREATED);
+  }
+
+  public AbstractRadixTrie(Date date) {
+    this.metaData.setDate(date);
+    this.metaData.setId(UUID.randomUUID());
+    this.metaData.setStatus(RadixTrieStatus.CREATED);
+  }
+
+  public AbstractRadixTrie(RadixTrieStatus status) {
+    this.metaData.setDate(new Date());
+    this.metaData.setId(UUID.randomUUID());
+    this.metaData.setStatus(status);
+  }
+
+  public AbstractRadixTrie(Date date, UUID uuid) {
+    this.metaData.setDate(date);
+    this.metaData.setId(uuid);
+    this.metaData.setStatus(RadixTrieStatus.CREATED);
+  }
+
+  public AbstractRadixTrie(Date date, RadixTrieStatus status) {
+    this.metaData.setDate(date);
+    this.metaData.setId(UUID.randomUUID());
+    this.metaData.setStatus(status);
+  }
+
+  @Override
+  public RadixMetaData getMetaData() {
+    return metaData;
+  }
 
   public BiMap<Integer, Long> getSeedMap() {
     return seedMap;
@@ -117,14 +155,7 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
 
       return this.add(newNode, data, indexingData);
     } else {
-      Collection<P> dataPoints = data.getDataPoints();
-      if (dataPoints.size() > 0 && dataPoints.stream().findFirst()
-          .get() instanceof RandomnessRadixTrieDataPoint) {
-        Collection<RandomnessRadixTrieDataPoint> dataPointCollection = (Collection<RandomnessRadixTrieDataPoint>) dataPoints;
-
-        dataPointCollection
-            .forEach(dp -> dp.removePrefixFromRemainingIndexingData(coveredEdges.length));
-      }
+      data.removePrefixFromRemainingIndexingData(coveredEdges.length);
 
       // merge instead
       Optional<E> table = parent.getOutgoingEdges().stream().findFirst();
@@ -132,16 +163,7 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
         return this.add(table.get().getChild(), data, indexingData);
       }
 
-      N leafNode = this.createNode(data, parent.getParentEdge());
-
-      /*if (LOGGER.getLevel() == Level.DEBUG) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Created new node for data: {").append(Arrays.toString(edges))
-            .append("} with path (from root): ");
-        leafNode.getEdgesFromRoot()
-            .forEach(e -> sb.append(Arrays.toString(e.getLabel())).append(", "));
-        LOGGER.debug(sb.toString());
-      }*/
+      this.createNode(data, parent.getParentEdge());
     }
     return true;
   }
@@ -201,9 +223,6 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
 
     String[] pathFromRoot = currentNode.getPathFromRoot();
 
-    //System.out.println("I went all the way to " + Arrays.toString(pathFromRoot));
-    //System.out.println("Looking for " + Arrays.toString(edgeLabels));
-
     if (!currentNode.isLeafNode()) {
       return Optional.empty();
     }
@@ -214,5 +233,32 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
       }
     }
     return Optional.of(currentNode);
+  }
+
+  @Override
+  public Optional<P> search(@NotNull I indexingData) {
+
+    int partitionSize = ConfigurationHelper.getConfig().getInt("radix.partition.size");
+
+    // TODO if we shift too often, we have to many partial matches which tanks our performance
+    //TODO shouldnt shift relative to partitionSize but to indexing data size
+    for (int i = 0; i < partitionSize - 26; i++) {
+      // shift
+      I shiftedIndexingData = shiftIndexingData(indexingData, i);
+      I discardedIndexingData = getDiscardedIndexingData(indexingData, i);
+
+      // search
+      Optional<N> node = getNode(shiftedIndexingData);
+      Collection<P> dataPoints = node.isPresent() && node.get().isLeafNode() ?
+          node.get().getData().getDataPoints(shiftedIndexingData) : Collections.emptyList();
+
+      // check
+      for (P dataPoint : dataPoints) {
+        if (checkDiscardedIndexingData(dataPoint, discardedIndexingData)) {
+          return Optional.of(dataPoint);
+        }
+      }
+    }
+    return Optional.empty();
   }
 }

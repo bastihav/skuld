@@ -11,7 +11,7 @@ public class IndexByteSerializer {
 
     final int VALUES_PER_BYTE = 256;
 
-    // round up to nearest integer
+    // round up to the nearest integer
     final int arraySize = max / VALUES_PER_BYTE + ((max % VALUES_PER_BYTE == 0) ? 0 : 1);
 
     return ByteBuffer.allocate(arraySize).putInt(value).array();

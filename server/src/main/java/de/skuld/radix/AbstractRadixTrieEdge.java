@@ -2,7 +2,7 @@ package de.skuld.radix;
 
 import java.util.Arrays;
 
-public abstract class AbstractRadixTrieEdge<D extends AbstractRadixTrieData, N extends RadixTrieNode<D, ? extends RadixTrieEdge<D, N>>> implements
+public abstract class AbstractRadixTrieEdge<D extends AbstractRadixTrieData<?, ?>, N extends RadixTrieNode<D, ? extends RadixTrieEdge<D, N>>> implements
     RadixTrieEdge<D, N> {
 
   protected N child;

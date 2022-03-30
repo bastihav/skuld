@@ -11,19 +11,22 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class DiskBasedRadixTrieNode extends
     AbstractRadixTrieNode<DiskBasedRandomnessRadixTrieData, byte[], RandomnessRadixTrieDataPoint, PathRadixTrieEdge> implements
     RadixTrieNode<DiskBasedRandomnessRadixTrieData, PathRadixTrieEdge> {
 
+  private static final Logger LOGGER = LogManager.getLogger();
   private final Path p;
   private final DiskBasedRadixTrie trie;
 
@@ -74,20 +77,21 @@ public class DiskBasedRadixTrieNode extends
   public String serialize() {
     File file = p.resolve(ConfigurationHelper.getConfig().getString("radix.leaf.file_name"))
         .toFile();
+    int sizeOnDisk = ConfigurationHelper.getConfig().getInt("radix.partition.serialized");
 
     try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(), EnumSet.of(
         StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE))) {
       long readSizeInBytes = fileChannel.size();
       if (readSizeInBytes != 0) {
-        System.out.println("File Should be empty");
+        LOGGER.error("Leaf file at " + p + " not empty");
       }
-      byte[] serializedData = this.data.serialize(trie);
 
-      long writeSizeInBytes = readSizeInBytes + serializedData.length;
-      MappedByteBuffer mappedByteBuffer = fileChannel.map(MapMode.READ_WRITE, 0, writeSizeInBytes);
-      mappedByteBuffer.position(0);
-      mappedByteBuffer.put(serializedData);
+      long writeSize = (long) this.data.getElementCount() * sizeOnDisk;
 
+      MappedByteBuffer mappedByteBuffer = fileChannel.map(MapMode.READ_WRITE, readSizeInBytes,
+          writeSize);
+
+      this.data.serialize(mappedByteBuffer, 0);
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -102,10 +106,9 @@ public class DiskBasedRadixTrieNode extends
 
   @Override
   public Collection<PathRadixTrieEdge> getOutgoingEdges() {
-    return Arrays.stream(p.toFile().list()).map(pathName -> {
+    return Arrays.stream(Objects.requireNonNull(p.toFile().list())).map(pathName -> {
 
       if (pathName.endsWith(ConfigurationHelper.getConfig().getString("radix.leaf.file_name"))) {
-        //System.out.println("this is the path name " + pathName);
         PathRadixTrieEdge edge = new PathRadixTrieEdge(new String[0],
             new DiskBasedRadixTrieNode(false, null, p.resolve(pathName), trie),
             p.resolve(pathName));
@@ -151,29 +154,40 @@ public class DiskBasedRadixTrieNode extends
     if (isRoot) {
       return null;
     } else {
-      String[] fragments = this.p.toString()
-          .split(Pattern.quote(this.p.getFileSystem().getSeparator()));
-
-      // TODO skuld config
-      String[] relevantFragments = this.p.toString()
-          .substring(this.p.toString().lastIndexOf("skuld"))
+      String[] relevantFragments = removePathPrefix(this.p)
           .replace(ConfigurationHelper.getConfig().getString("radix.leaf.file_name"), "").split(
               Pattern.quote(this.p.getFileSystem().getSeparator()));
 
-      // ignore first fragment as it is skuld/
-      String[] labels = relevantFragments[relevantFragments.length - 1].split("(?<=\\G..)");
+      String[] labels;
+      // last fragment is the current edge we are interested in
+      if (relevantFragments.length > 0) {
+        labels = relevantFragments[relevantFragments.length - 1].split("(?<=\\G..)");
+      } else {
+        labels = new String[0];
+      }
 
       PathRadixTrieEdge edge = new PathRadixTrieEdge(labels, this, p);
 
-      String pathString = Arrays.stream(relevantFragments).limit(relevantFragments.length - 1)
-          .reduce((a, b) -> a + this.p.getFileSystem().getSeparator() + b).get();
+      Path pathString;
+      if (relevantFragments.length > 0) {
+        if (this.p.toString()
+            .endsWith(ConfigurationHelper.getConfig().getString("radix.leaf.file_name"))) {
+          pathString = this.getPath().getRoot().resolve(
+              this.p.subpath(0, this.p.getNameCount() - 2));
+        } else {
+          pathString = this.getPath().getRoot().resolve(
+              this.p.subpath(0, this.p.getNameCount() - 1));
+        }
+      } else {
+        pathString = this.p;
+      }
 
-      DiskBasedRadixTrieNode parentNode = new DiskBasedRadixTrieNode(relevantFragments.length == 2,
-          null, Paths.get(pathString), trie);
+      DiskBasedRadixTrieNode parentNode = new DiskBasedRadixTrieNode(relevantFragments.length == 1,
+          null, pathString, trie);
       edge.setParent(parentNode);
 
-      edge.setSummary(fragments.length > 2);
-      edge.setAmountOfSummarizedElements(fragments.length - 2);
+      edge.setSummary(labels.length > 2);
+      edge.setAmountOfSummarizedElements(labels.length);
       return edge;
     }
   }
@@ -181,6 +195,15 @@ public class DiskBasedRadixTrieNode extends
   @Override
   public void setParentEdge(PathRadixTrieEdge parentEdge) {
     this.parentEdge = parentEdge;
+  }
+
+  private String removePathPrefix(Path path) {
+    Path trieRootPath = this.trie.getRoot().getPath();
+    if (trieRootPath.getNameCount() == path.getNameCount()) {
+      return "";
+    }
+
+    return path.subpath(trieRootPath.getNameCount(), path.getNameCount()).toString();
   }
 
 }

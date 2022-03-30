@@ -56,7 +56,7 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extend
   boolean add(@NotNull N parent, @NotNull D data, @NotNull I indexingData);
 
   /**
-   * Methot that returns whether a node at the position described by indexingdata exists.
+   * Method that returns whether a node at the position described by indexing-data exists.
    *
    * @param indexingData position query
    * @return true if the node exists
@@ -70,6 +70,15 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extend
    * @return Optional with node, if present
    */
   Optional<N> getNode(@NotNull I indexingData);
+
+  /**
+   * Search for data point in trie. This implements a shifting search to account for different
+   * partition offsets
+   *
+   * @param indexingData indexing data
+   * @return optional data point
+   */
+  Optional<P> search(@NotNull I indexingData);
 
   /**
    * Method that creates a new edge for the radix trie. The edge should not yet be connected or
@@ -117,4 +126,53 @@ public interface RadixTrie<D extends AbstractRadixTrieData<I, P>, P, I, N extend
    * @return seed map
    */
   BiMap<Integer, Long> getSeedMap();
+
+  /**
+   * Deletes the trie
+   */
+  void delete();
+
+  /**
+   * Gets the metadata of this trie
+   *
+   * @return meta data
+   */
+  RadixMetaData getMetaData();
+
+  /**
+   * Serializes the MetaData on the file system
+   */
+  void serializeMetaData();
+
+  /**
+   * Generate this radix trie, fill it with random data.
+   */
+  void generate();
+
+  /**
+   * Checks whether the trie contains discarded indexing data preceding the datapoint
+   *
+   * @param dataPoint             found dp
+   * @param discardedIndexingData indexing data to check preceding things for
+   * @return whether the dp is correct for the original indexing data
+   */
+  boolean checkDiscardedIndexingData(P dataPoint, I discardedIndexingData);
+
+  /**
+   * Shift the indexing data offset-elements to the left
+   *
+   * @param indexingData data to shift
+   * @param offset       offset
+   * @return shifted indexing data
+   */
+  I shiftIndexingData(I indexingData, int offset);
+
+  /**
+   * Get the discarded (shifted to the left) indexing data.
+   *
+   * @param indexingData data
+   * @param offset       offset
+   * @return discarded indexing data
+   */
+  I getDiscardedIndexingData(I indexingData, int offset);
 }

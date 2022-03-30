@@ -1,2 +1,3 @@
 rootProject.name = 'skuld'
 include 'server'
+include 'Java-PRNG'
