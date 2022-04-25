@@ -78,6 +78,12 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
     }
   }
 
+  public void clearMemoryMappedFile() {
+    if (mappedByteBuffer != null) {
+      DiskBasedRadixTrie.closeDirectBuffer(mappedByteBuffer);
+    }
+  }
+
   @Override
   public int getElementCount() {
     if (buffer != null) {
@@ -106,6 +112,9 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
     Stream<RandomnessRadixTrieDataPoint> dpSorted = Stream
         .concat(this.getDataPoints().stream(), otherDp.stream()).sorted();
 
+    if (mappedByteBuffer != null) {
+      DiskBasedRadixTrie.closeDirectBuffer(mappedByteBuffer);
+    }
     try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(p, EnumSet.of(
         StandardOpenOption.READ, StandardOpenOption.WRITE))) {
       readSizeInBytes = fileChannel.size();
@@ -135,6 +144,9 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
     int partitionSizeOnDisk = ConfigurationHelper.getConfig().getInt("radix.partition.serialized");
 
     if (!resolved) {
+      if (mappedByteBuffer != null) {
+        DiskBasedRadixTrie.closeDirectBuffer(mappedByteBuffer);
+      }
       try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(p, EnumSet.of(
           StandardOpenOption.READ))) {
         mappedByteBuffer = fileChannel.map(MapMode.READ_ONLY, 0, fileChannel.size());
@@ -180,6 +192,9 @@ public class DiskBasedRandomnessRadixTrieData extends RandomnessRadixTrieData {
           .collect(Collectors.toList());
     }
 
+    if (mappedByteBuffer != null) {
+      DiskBasedRadixTrie.closeDirectBuffer(mappedByteBuffer);
+    }
     try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(p, EnumSet.of(
         StandardOpenOption.READ))) {
       mappedByteBuffer = fileChannel.map(MapMode.READ_ONLY, 0, fileChannel.size());

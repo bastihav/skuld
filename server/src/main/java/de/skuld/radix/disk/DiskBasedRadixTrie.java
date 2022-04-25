@@ -25,6 +25,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.charset.StandardCharsets;
@@ -155,7 +156,7 @@ public class DiskBasedRadixTrie extends
    *
    * @param cb buffer to close
    */
-  private static void closeDirectBuffer(ByteBuffer cb) {
+  public static void closeDirectBuffer(ByteBuffer cb) {
     if (cb == null || !cb.isDirect()) {
       return;
     }
@@ -176,7 +177,7 @@ public class DiskBasedRadixTrie extends
         Class<?> unsafeClass;
         try {
           unsafeClass = Class.forName("sun.misc.Unsafe");
-        } catch (Exception ex) {
+        } catch (LinkageError | ClassNotFoundException ex) {
           // jdk.internal.misc.Unsafe doesn't yet have an invokeCleaner() method,
           // but that method should be added if sun.misc.Unsafe is removed.
           unsafeClass = Class.forName("jdk.internal.misc.Unsafe");
@@ -188,8 +189,8 @@ public class DiskBasedRadixTrie extends
         Object theUnsafe = theUnsafeField.get(null);
         clean.invoke(theUnsafe, cb);
       }
-    } catch (Exception ex) {
-      ex.printStackTrace();
+    } catch (NoSuchFieldException | ClassNotFoundException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+      e.printStackTrace();
     }
   }
 

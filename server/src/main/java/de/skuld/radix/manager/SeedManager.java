@@ -3,6 +3,7 @@ package de.skuld.radix.manager;
 import com.google.common.primitives.Longs;
 import de.skuld.prng.PRNG;
 import de.skuld.util.ConfigurationHelper;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -83,7 +84,7 @@ public class SeedManager {
         seeds.add(
             prng.getConstructor(long.class).newInstance(Long.MAX_VALUE).usesUnixTimeAsDefault() ? 0
                 : prng.getConstructor(long.class).newInstance(Long.MAX_VALUE).getDefaultSeed());
-      } catch (Exception e) {
+      } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
         e.printStackTrace();
       }
     });

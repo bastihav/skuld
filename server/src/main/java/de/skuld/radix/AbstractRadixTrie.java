@@ -2,6 +2,7 @@ package de.skuld.radix;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import de.skuld.radix.disk.DiskBasedRandomnessRadixTrieData;
 import de.skuld.util.ConfigurationHelper;
 import java.util.Arrays;
 import java.util.Collection;
@@ -252,6 +253,10 @@ public abstract class AbstractRadixTrie<D extends AbstractRadixTrieData<I, P>, P
       Collection<P> dataPoints = node.isPresent() && node.get().isLeafNode() ?
           node.get().getData().getDataPoints(shiftedIndexingData) : Collections.emptyList();
 
+      if (node.get().getData() instanceof DiskBasedRandomnessRadixTrieData) {
+        DiskBasedRandomnessRadixTrieData diskBasedRandomnessRadixTrieData = (DiskBasedRandomnessRadixTrieData) node.get().getData();
+        diskBasedRandomnessRadixTrieData.clearMemoryMappedFile();
+      }
       // check
       for (P dataPoint : dataPoints) {
         if (checkDiscardedIndexingData(dataPoint, discardedIndexingData)) {

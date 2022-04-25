@@ -14,7 +14,7 @@ version '1.0-SNAPSHOT'
 
 application {
     mainClass = 'de.skuld.web.Swagger2SpringBoot'
-    applicationDefaultJvmArgs = ['-Xmx32g']
+    applicationDefaultJvmArgs = ['-Xmx24g']
 }
 
 repositories {

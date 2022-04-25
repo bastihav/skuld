@@ -23,6 +23,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
@@ -31,7 +32,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -40,6 +43,7 @@ import javax.validation.Valid;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -108,7 +112,11 @@ public class RandomnessApiController implements RandomnessApi {
     BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     int maxThreads = ConfigurationHelper.getConfig().getInt("radix.analysis.threads");
     ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(maxThreads, maxThreads, 20,
-        TimeUnit.MILLISECONDS, queue);
+        TimeUnit.MILLISECONDS, queue, runnable -> {
+          Thread t = new Thread(runnable);
+          t.setDaemon(true);
+          return t;
+        });
 
     for (RandomnessQueryInner randomnessQueryInner : query) {
       threadPoolExecutor.execute(() -> {
@@ -202,7 +210,7 @@ public class RandomnessApiController implements RandomnessApi {
           // TODO this shut downs for all queries, not just "serverRandom" or "cbc" -> need to seperate
           // want to continue searching for IV, even if we found random
           // TODO we could rescan for all where we found one match, i.e. early stopped
-          threadPoolExecutor.shutdownNow();
+          threadPoolExecutor.shutdown();
           boolean terminated = threadPoolExecutor.awaitTermination(50, TimeUnit.MILLISECONDS);
           if (!terminated) {
             threadPoolExecutor.shutdownNow();
@@ -213,12 +221,13 @@ public class RandomnessApiController implements RandomnessApi {
          Thread.sleep(100);
         }
       }
-
+      threadPoolExecutor.shutdownNow();
       LOGGER.info("Threads killed? " + threadPoolExecutor.isTerminated());
     } catch (InterruptedException e) {
       e.printStackTrace();
+    } finally {
+      threadPoolExecutor.shutdownNow();
     }
-
     long pong = System.nanoTime();
     //writer.println((pong-ping) + "," + (result.getPairs() != null && !result.getPairs().isEmpty()) + "," + (result.getPairs() != null && !result.getPairs().isEmpty() ? result.getPairs().get(0).getPrng(): "-"));
     result.setPairs(result.getPairs().stream().distinct().collect(Collectors.toList()));
